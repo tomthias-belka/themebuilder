@@ -1,0 +1,299 @@
+import { create } from 'zustand'
+import { db, dbOperations } from '@/db/database'
+import type { Brand, ClaraTokensJson, FlattenedToken } from '@/types/tokens'
+import { flattenSemanticTokens, extractBrandNames, updateTokenValue, addBrandToTokens, removeBrandFromTokens } from '@/utils/tokenFlattener'
+import { createSemanticBrandExport, generateExportFilename, downloadJson, mergeSemanticBrandImport } from '@/utils/exportFormat'
+
+interface ThemeState {
+  // Data
+  tokens: ClaraTokensJson | null
+  brands: Brand[]
+  selectedBrand: string | null
+  flattenedTokens: FlattenedToken[]
+
+  // UI State
+  isLoading: boolean
+  isInitialized: boolean
+  hasUnsavedChanges: boolean
+
+  // Actions
+  initialize: () => Promise<void>
+  loadTokensFromFile: (jsonData: ClaraTokensJson) => Promise<void>
+  selectBrand: (brandName: string) => void
+  updateToken: (path: string, newValue: string) => void
+  saveChanges: () => Promise<void>
+
+  // Brand management
+  addBrand: (brandName: string, sourceBrand?: string) => Promise<void>
+  deleteBrand: (brandName: string) => Promise<void>
+
+  // Export/Import
+  exportSemanticBrand: (brandName?: string) => void
+  importSemanticBrand: (jsonData: unknown) => Promise<{ success: boolean; brandName?: string; error?: string }>
+}
+
+export const useThemeStore = create<ThemeState>((set, get) => ({
+  // Initial state
+  tokens: null,
+  brands: [],
+  selectedBrand: null,
+  flattenedTokens: [],
+  isLoading: false,
+  isInitialized: false,
+  hasUnsavedChanges: false,
+
+  // Initialize from IndexedDB
+  initialize: async () => {
+    set({ isLoading: true })
+
+    try {
+      // Load tokens from IndexedDB
+      const storedTokens = await dbOperations.getGlobalTokens()
+      const storedBrands = await dbOperations.getAllBrands()
+
+      if (storedTokens) {
+        const brandNames = extractBrandNames(storedTokens)
+        const selectedBrand = brandNames[0] || null
+        const flattened = selectedBrand
+          ? flattenSemanticTokens(storedTokens, selectedBrand)
+          : []
+
+        set({
+          tokens: storedTokens,
+          brands: storedBrands,
+          selectedBrand,
+          flattenedTokens: flattened,
+          isInitialized: true,
+          isLoading: false
+        })
+      } else {
+        set({
+          isInitialized: true,
+          isLoading: false
+        })
+      }
+    } catch (error) {
+      console.error('Failed to initialize store:', error)
+      set({ isLoading: false, isInitialized: true })
+    }
+  },
+
+  // Load tokens from uploaded JSON file
+  loadTokensFromFile: async (jsonData: ClaraTokensJson) => {
+    set({ isLoading: true })
+
+    try {
+      // Validate structure
+      if (!jsonData.global || !jsonData.semantic) {
+        throw new Error('Invalid token file structure. Must have global and semantic sections.')
+      }
+
+      // Extract brand names and sync with IndexedDB
+      const brandNames = extractBrandNames(jsonData)
+
+      // Clear existing brands and add new ones
+      await db.brands.clear()
+      for (const name of brandNames) {
+        await dbOperations.addBrand(name)
+      }
+
+      // Store tokens
+      await dbOperations.setGlobalTokens(jsonData)
+
+      // Update state
+      const brands = await dbOperations.getAllBrands()
+      const selectedBrand = brandNames[0] || null
+      const flattened = selectedBrand
+        ? flattenSemanticTokens(jsonData, selectedBrand)
+        : []
+
+      set({
+        tokens: jsonData,
+        brands,
+        selectedBrand,
+        flattenedTokens: flattened,
+        isLoading: false,
+        hasUnsavedChanges: false
+      })
+    } catch (error) {
+      console.error('Failed to load tokens:', error)
+      set({ isLoading: false })
+      throw error
+    }
+  },
+
+  // Select a brand to edit
+  selectBrand: (brandName: string) => {
+    const { tokens } = get()
+    if (!tokens) return
+
+    const flattened = flattenSemanticTokens(tokens, brandName)
+
+    set({
+      selectedBrand: brandName,
+      flattenedTokens: flattened
+    })
+  },
+
+  // Update a token value
+  updateToken: (path: string, newValue: string) => {
+    const { tokens, selectedBrand } = get()
+    if (!tokens || !selectedBrand) return
+
+    const updatedTokens = updateTokenValue(tokens, path, selectedBrand, newValue)
+    const flattened = flattenSemanticTokens(updatedTokens, selectedBrand)
+
+    set({
+      tokens: updatedTokens,
+      flattenedTokens: flattened,
+      hasUnsavedChanges: true
+    })
+  },
+
+  // Save changes to IndexedDB
+  saveChanges: async () => {
+    const { tokens } = get()
+    if (!tokens) return
+
+    try {
+      await dbOperations.setGlobalTokens(tokens)
+      set({ hasUnsavedChanges: false })
+    } catch (error) {
+      console.error('Failed to save changes:', error)
+      throw error
+    }
+  },
+
+  // Add a new brand
+  addBrand: async (brandName: string, sourceBrand?: string) => {
+    const { tokens } = get()
+    if (!tokens) return
+
+    // Check if brand already exists
+    const existingBrands = extractBrandNames(tokens)
+    if (existingBrands.includes(brandName)) {
+      throw new Error(`Brand "${brandName}" already exists`)
+    }
+
+    // Add brand to tokens
+    const updatedTokens = addBrandToTokens(tokens, brandName, sourceBrand)
+
+    // Add to IndexedDB
+    await dbOperations.addBrand(brandName)
+    await dbOperations.setGlobalTokens(updatedTokens)
+
+    // Update state
+    const brands = await dbOperations.getAllBrands()
+    const flattened = flattenSemanticTokens(updatedTokens, brandName)
+
+    set({
+      tokens: updatedTokens,
+      brands,
+      selectedBrand: brandName,
+      flattenedTokens: flattened,
+      hasUnsavedChanges: false
+    })
+  },
+
+  // Delete a brand
+  deleteBrand: async (brandName: string) => {
+    const { tokens, selectedBrand } = get()
+    if (!tokens) return
+
+    // Don't delete the last brand
+    const existingBrands = extractBrandNames(tokens)
+    if (existingBrands.length <= 1) {
+      throw new Error('Cannot delete the last brand')
+    }
+
+    // Remove brand from tokens
+    const updatedTokens = removeBrandFromTokens(tokens, brandName)
+
+    // Remove from IndexedDB
+    const brand = await dbOperations.getBrandByName(brandName)
+    if (brand?.id) {
+      await dbOperations.deleteBrand(brand.id)
+    }
+    await dbOperations.setGlobalTokens(updatedTokens)
+
+    // Update state
+    const brands = await dbOperations.getAllBrands()
+    const newBrands = extractBrandNames(updatedTokens)
+    const newSelectedBrand = selectedBrand === brandName
+      ? newBrands[0] || null
+      : selectedBrand
+
+    const flattened = newSelectedBrand
+      ? flattenSemanticTokens(updatedTokens, newSelectedBrand)
+      : []
+
+    set({
+      tokens: updatedTokens,
+      brands,
+      selectedBrand: newSelectedBrand,
+      flattenedTokens: flattened,
+      hasUnsavedChanges: false
+    })
+  },
+
+  // Export semantic-brand.json for selected brand
+  exportSemanticBrand: (brandName?: string) => {
+    const { tokens, selectedBrand } = get()
+    if (!tokens) return
+
+    const targetBrand = brandName || selectedBrand
+    if (!targetBrand) return
+
+    const exportData = createSemanticBrandExport(tokens, targetBrand)
+    const filename = generateExportFilename(targetBrand)
+
+    downloadJson(exportData, filename)
+  },
+
+  // Import semantic-brand.json
+  importSemanticBrand: async (jsonData: unknown) => {
+    const { tokens } = get()
+    if (!tokens) {
+      return { success: false, error: 'No tokens loaded. Please upload clara-tokens.json first.' }
+    }
+
+    try {
+      // Validate structure
+      if (!jsonData || typeof jsonData !== 'object' || !('semantic' in jsonData)) {
+        return { success: false, error: 'Invalid file format. Must have a "semantic" section.' }
+      }
+
+      const result = mergeSemanticBrandImport(tokens, jsonData as { semantic: Record<string, unknown> })
+
+      if (!result.brandName) {
+        return { success: false, error: 'Could not detect brand name in the imported file.' }
+      }
+
+      // Save merged tokens
+      await dbOperations.setGlobalTokens(result.tokens)
+
+      // Check if brand exists, add if not
+      const existingBrands = extractBrandNames(result.tokens)
+      if (!existingBrands.includes(result.brandName)) {
+        await dbOperations.addBrand(result.brandName)
+      }
+
+      // Update state
+      const brands = await dbOperations.getAllBrands()
+      const flattened = flattenSemanticTokens(result.tokens, result.brandName)
+
+      set({
+        tokens: result.tokens,
+        brands,
+        selectedBrand: result.brandName,
+        flattenedTokens: flattened,
+        hasUnsavedChanges: false
+      })
+
+      return { success: true, brandName: result.brandName }
+    } catch (error) {
+      console.error('Failed to import semantic brand:', error)
+      return { success: false, error: String(error) }
+    }
+  }
+}))
