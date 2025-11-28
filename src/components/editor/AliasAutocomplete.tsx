@@ -1,4 +1,5 @@
 import { useState, useRef, useEffect, useCallback } from 'react'
+import { createPortal } from 'react-dom'
 import { useThemeStore } from '@/store/themeStore'
 import { getAllAliases, isAlias, resolveTokenValue } from '@/utils/tokenResolver'
 import { Input } from '@/components/ui/input'
@@ -28,6 +29,8 @@ export function AliasAutocomplete({
   const [selectedIndex, setSelectedIndex] = useState(0)
   const inputRef = useRef<HTMLInputElement>(null)
   const listRef = useRef<HTMLDivElement>(null)
+  const containerRef = useRef<HTMLDivElement>(null)
+  const [dropdownPosition, setDropdownPosition] = useState({ top: 0, left: 0, width: 0 })
 
   // Get all aliases for autocomplete
   const allAliases = tokens && selectedBrand
@@ -125,8 +128,20 @@ export function AliasAutocomplete({
     }
   }, [selectedIndex, isOpen])
 
+  // Update dropdown position when open
+  useEffect(() => {
+    if (isOpen && containerRef.current) {
+      const rect = containerRef.current.getBoundingClientRect()
+      setDropdownPosition({
+        top: rect.bottom + window.scrollY + 4,
+        left: rect.left + window.scrollX,
+        width: rect.width,
+      })
+    }
+  }, [isOpen, search])
+
   return (
-    <div className={cn('relative', className)}>
+    <div ref={containerRef} className={cn('relative', className)}>
       <div className="flex items-center gap-2">
         {resolvedValue && resolvedValue.startsWith('#') && (
           <ColorPreview color={resolvedValue} size="sm" />
@@ -143,9 +158,16 @@ export function AliasAutocomplete({
         />
       </div>
 
-      {/* Suggestions dropdown */}
-      {isOpen && suggestions.length > 0 && (
-        <div className="absolute z-50 w-full mt-1 bg-popover border rounded-md shadow-lg">
+      {/* Suggestions dropdown - rendered via portal to escape overflow constraints */}
+      {isOpen && suggestions.length > 0 && createPortal(
+        <div
+          className="fixed z-[9999] bg-popover border rounded-md shadow-lg"
+          style={{
+            top: dropdownPosition.top,
+            left: dropdownPosition.left,
+            width: dropdownPosition.width,
+          }}
+        >
           <ScrollArea className="max-h-64">
             <div ref={listRef} className="p-1">
               {suggestions.map((suggestion, index) => (
@@ -171,7 +193,8 @@ export function AliasAutocomplete({
               ))}
             </div>
           </ScrollArea>
-        </div>
+        </div>,
+        document.body
       )}
     </div>
   )

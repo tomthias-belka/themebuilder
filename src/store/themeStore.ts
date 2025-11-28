@@ -42,14 +42,42 @@ export const useThemeStore = create<ThemeState>((set, get) => ({
   isInitialized: false,
   hasUnsavedChanges: false,
 
-  // Initialize from IndexedDB
+  // Initialize from IndexedDB or preload default tokens
   initialize: async () => {
     set({ isLoading: true })
 
     try {
       // Load tokens from IndexedDB
-      const storedTokens = await dbOperations.getGlobalTokens()
-      const storedBrands = await dbOperations.getAllBrands()
+      let storedTokens = await dbOperations.getGlobalTokens()
+      let storedBrands = await dbOperations.getAllBrands()
+
+      // If no tokens in DB, preload from public/clara-tokens.json
+      if (!storedTokens) {
+        try {
+          const basePath = import.meta.env.BASE_URL || '/'
+          const response = await fetch(`${basePath}clara-tokens.json`)
+          if (response.ok) {
+            const defaultTokens = await response.json() as ClaraTokensJson
+
+            // Validate structure
+            if (defaultTokens.global && defaultTokens.semantic) {
+              // Extract brand names and save to IndexedDB
+              const brandNames = extractBrandNames(defaultTokens)
+
+              await db.brands.clear()
+              for (const name of brandNames) {
+                await dbOperations.addBrand(name)
+              }
+              await dbOperations.setGlobalTokens(defaultTokens)
+
+              storedTokens = defaultTokens
+              storedBrands = await dbOperations.getAllBrands()
+            }
+          }
+        } catch (fetchError) {
+          console.warn('Could not preload default tokens:', fetchError)
+        }
+      }
 
       if (storedTokens) {
         const brandNames = extractBrandNames(storedTokens)
