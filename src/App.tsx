@@ -7,9 +7,9 @@ import { TokenEditor } from '@/components/editor'
 import {
   UploadTokensModal,
   ImportSemanticModal,
-  AddThemeModal,
   DeleteThemeModal,
 } from '@/components/modals'
+import { ThemeBuilderWizard } from '@/components/wizard'
 
 function App() {
   const { toast } = useToast()
@@ -18,7 +18,7 @@ function App() {
   // Modal states
   const [uploadTokensOpen, setUploadTokensOpen] = useState(false)
   const [importSemanticOpen, setImportSemanticOpen] = useState(false)
-  const [addThemeOpen, setAddThemeOpen] = useState(false)
+  const [themeWizardOpen, setThemeWizardOpen] = useState(false)
   const [deleteThemeOpen, setDeleteThemeOpen] = useState(false)
   const [themeToDelete, setThemeToDelete] = useState<string>('')
 
@@ -55,7 +55,7 @@ function App() {
       <AppLayout
         onUploadTokens={() => setUploadTokensOpen(true)}
         onUploadSemanticBrand={() => setImportSemanticOpen(true)}
-        onAddTheme={() => setAddThemeOpen(true)}
+        onAddTheme={() => setThemeWizardOpen(true)}
         onDeleteTheme={handleDeleteTheme}
       >
         <TokenEditor />
@@ -70,9 +70,9 @@ function App() {
         open={importSemanticOpen}
         onOpenChange={setImportSemanticOpen}
       />
-      <AddThemeModal
-        open={addThemeOpen}
-        onOpenChange={setAddThemeOpen}
+      <ThemeBuilderWizard
+        open={themeWizardOpen}
+        onOpenChange={setThemeWizardOpen}
       />
       <DeleteThemeModal
         open={deleteThemeOpen}

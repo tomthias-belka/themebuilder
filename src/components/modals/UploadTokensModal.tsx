@@ -10,7 +10,7 @@ import {
 import { Button } from '@/components/ui/button'
 import { Upload, FileJson, AlertCircle } from 'lucide-react'
 import { useThemeStore } from '@/store/themeStore'
-import type { ClaraTokensJson } from '@/types/tokens'
+import type { OrbitTokensJson } from '@/types/tokens'
 
 interface UploadTokensModalProps {
   open: boolean
@@ -57,7 +57,7 @@ export function UploadTokensModal({ open, onOpenChange }: UploadTokensModalProps
 
     try {
       const text = await file.text()
-      const json = JSON.parse(text) as ClaraTokensJson
+      const json = JSON.parse(text) as OrbitTokensJson
 
       // Validate structure
       if (!json.global || !json.semantic) {
@@ -86,7 +86,7 @@ export function UploadTokensModal({ open, onOpenChange }: UploadTokensModalProps
         <DialogHeader>
           <DialogTitle>Upload Token File</DialogTitle>
           <DialogDescription>
-            Upload your clara-tokens.json file to load all your design tokens.
+            Upload your orbit-tokens.json file to load all your design tokens.
           </DialogDescription>
         </DialogHeader>
 

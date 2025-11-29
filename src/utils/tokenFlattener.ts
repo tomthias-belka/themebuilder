@@ -1,11 +1,20 @@
-import type { ClaraTokensJson, FlattenedToken, TokenType, TokenValue } from '@/types/tokens'
+import type { OrbitTokensJson, FlattenedToken, TokenType, TokenValue } from '@/types/tokens'
+import type { GeneratedBrandColors, RadiusSize } from '@/types/wizard'
+
+// Radius mapping (duplicated here to avoid circular imports)
+const RADIUS_TOKEN_MAP: Record<RadiusSize, string> = {
+  sm: '{radius.xs}',
+  md: '{radius.sm}',
+  lg: '{radius.md}',
+  xl: '{radius.lg}',
+}
 
 /**
  * Flattens the semantic tokens structure for display in the editor table
  * Returns an array of flattened tokens for a specific brand
  */
 export function flattenSemanticTokens(
-  tokens: ClaraTokensJson,
+  tokens: OrbitTokensJson,
   brandName: string
 ): FlattenedToken[] {
   const flattened: FlattenedToken[] = []
@@ -98,7 +107,7 @@ export function groupTokensByCategory(
 /**
  * Extracts all brand names from the tokens structure
  */
-export function extractBrandNames(tokens: ClaraTokensJson): string[] {
+export function extractBrandNames(tokens: OrbitTokensJson): string[] {
   // Get brand names from the brand.theme token which contains all brand keys
   const themeToken = tokens.semantic?.brand?.theme
   if (themeToken && '$value' in themeToken) {
@@ -125,13 +134,13 @@ export function extractBrandNames(tokens: ClaraTokensJson): string[] {
  * Returns a new tokens object (immutable update)
  */
 export function updateTokenValue(
-  tokens: ClaraTokensJson,
+  tokens: OrbitTokensJson,
   path: string,
   brandName: string,
   newValue: TokenValue
-): ClaraTokensJson {
+): OrbitTokensJson {
   // Deep clone the tokens
-  const newTokens = JSON.parse(JSON.stringify(tokens)) as ClaraTokensJson
+  const newTokens = JSON.parse(JSON.stringify(tokens)) as OrbitTokensJson
 
   // Navigate to the token and update
   const parts = path.split('.')
@@ -161,11 +170,11 @@ export function updateTokenValue(
  * Copies values from a source brand or uses defaults
  */
 export function addBrandToTokens(
-  tokens: ClaraTokensJson,
+  tokens: OrbitTokensJson,
   newBrandName: string,
   sourceBrandName?: string
-): ClaraTokensJson {
-  const newTokens = JSON.parse(JSON.stringify(tokens)) as ClaraTokensJson
+): OrbitTokensJson {
+  const newTokens = JSON.parse(JSON.stringify(tokens)) as OrbitTokensJson
 
   function traverse(obj: unknown) {
     if (!obj || typeof obj !== 'object') return
@@ -201,10 +210,10 @@ export function addBrandToTokens(
  * Removes a brand from all multi-brand tokens
  */
 export function removeBrandFromTokens(
-  tokens: ClaraTokensJson,
+  tokens: OrbitTokensJson,
   brandName: string
-): ClaraTokensJson {
-  const newTokens = JSON.parse(JSON.stringify(tokens)) as ClaraTokensJson
+): OrbitTokensJson {
+  const newTokens = JSON.parse(JSON.stringify(tokens)) as OrbitTokensJson
 
   function traverse(obj: unknown) {
     if (!obj || typeof obj !== 'object') return
@@ -223,6 +232,74 @@ export function removeBrandFromTokens(
   }
 
   traverse(newTokens.semantic)
+
+  return newTokens
+}
+
+/**
+ * Adds a new brand with custom generated colors
+ * 1. Copies all tokens from template brand
+ * 2. Overwrites brand.primary.*, brand.secondary.*, brand.accent.* with generated colors
+ * 3. Optionally sets the brand.radius token
+ */
+export function addBrandWithCustomColors(
+  tokens: OrbitTokensJson,
+  newBrandName: string,
+  templateBrandName: string,
+  brandColors: GeneratedBrandColors,
+  radius?: RadiusSize
+): OrbitTokensJson {
+  // First, copy all tokens from template
+  const newTokens = addBrandToTokens(tokens, newBrandName, templateBrandName)
+
+  // Then overwrite the brand color tokens with generated colors
+  const brand = newTokens.semantic?.brand
+  if (!brand) return newTokens
+
+  // Apply primary variants
+  const primary = brand.primary
+  if (primary && typeof primary === 'object') {
+    for (const [variant, alias] of Object.entries(brandColors.primary)) {
+      const token = (primary as Record<string, unknown>)[variant]
+      if (token && typeof token === 'object' && '$value' in token) {
+        const values = (token as { $value: Record<string, TokenValue> }).$value
+        values[newBrandName] = alias
+      }
+    }
+  }
+
+  // Apply secondary variants
+  const secondary = brand.secondary
+  if (secondary && typeof secondary === 'object') {
+    for (const [variant, alias] of Object.entries(brandColors.secondary)) {
+      const token = (secondary as Record<string, unknown>)[variant]
+      if (token && typeof token === 'object' && '$value' in token) {
+        const values = (token as { $value: Record<string, TokenValue> }).$value
+        values[newBrandName] = alias
+      }
+    }
+  }
+
+  // Apply accent variants
+  const accent = brand.accent
+  if (accent && typeof accent === 'object') {
+    for (const [variant, alias] of Object.entries(brandColors.accent)) {
+      const token = (accent as Record<string, unknown>)[variant]
+      if (token && typeof token === 'object' && '$value' in token) {
+        const values = (token as { $value: Record<string, TokenValue> }).$value
+        values[newBrandName] = alias
+      }
+    }
+  }
+
+  // Apply radius if specified
+  if (radius) {
+    const radiusToken = brand.radius as unknown
+    if (radiusToken && typeof radiusToken === 'object' && '$value' in (radiusToken as Record<string, unknown>)) {
+      const tokenWithValue = radiusToken as { $value: Record<string, TokenValue> }
+      tokenWithValue.$value[newBrandName] = RADIUS_TOKEN_MAP[radius]
+    }
+  }
 
   return newTokens
 }

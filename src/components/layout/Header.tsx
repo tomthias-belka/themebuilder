@@ -67,7 +67,7 @@ export function Header({ onUploadTokens, onUploadSemanticBrand }: HeaderProps) {
           <DropdownMenuContent align="end">
             <DropdownMenuItem onClick={onUploadTokens}>
               <FileUp className="h-4 w-4 mr-2" />
-              Upload clara-tokens.json
+              Upload orbit-tokens.json
             </DropdownMenuItem>
             <DropdownMenuSeparator />
             <DropdownMenuItem onClick={onUploadSemanticBrand} disabled={!tokens}>

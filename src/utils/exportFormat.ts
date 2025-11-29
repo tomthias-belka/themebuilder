@@ -1,4 +1,4 @@
-import type { ClaraTokensJson, TokenValue } from '@/types/tokens'
+import type { OrbitTokensJson, TokenValue } from '@/types/tokens'
 
 /**
  * Export format for semantic-brand.json
@@ -13,7 +13,7 @@ export interface SemanticBrandExport {
  * The format keeps the full semantic structure but each $value contains only the selected brand
  */
 export function createSemanticBrandExport(
-  tokens: ClaraTokensJson,
+  tokens: OrbitTokensJson,
   brandName: string
 ): SemanticBrandExport {
   function traverse(obj: unknown): unknown {
@@ -85,9 +85,9 @@ export function downloadJson(data: unknown, filename: string): void {
  * Updates only the values for the brand present in the import
  */
 export function mergeSemanticBrandImport(
-  existingTokens: ClaraTokensJson,
+  existingTokens: OrbitTokensJson,
   importedData: SemanticBrandExport
-): { tokens: ClaraTokensJson; brandName: string | null } {
+): { tokens: OrbitTokensJson; brandName: string | null } {
   // Extract brand name from the imported data
   let detectedBrand: string | null = null
 
@@ -120,7 +120,7 @@ export function mergeSemanticBrandImport(
   }
 
   // Deep clone existing tokens
-  const newTokens = JSON.parse(JSON.stringify(existingTokens)) as ClaraTokensJson
+  const newTokens = JSON.parse(JSON.stringify(existingTokens)) as OrbitTokensJson
 
   function mergeValues(existing: unknown, imported: unknown, brand: string): void {
     if (!existing || !imported) return

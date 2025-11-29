@@ -1,10 +1,10 @@
 import Dexie, { type EntityTable } from 'dexie'
-import type { Brand, ClaraTokensJson } from '@/types/tokens'
+import type { Brand, OrbitTokensJson } from '@/types/tokens'
 
 // Database schema for storing brands and tokens
 interface OrbitDatabase extends Dexie {
   brands: EntityTable<Brand, 'id'>
-  globalTokens: EntityTable<{ id: number; data: ClaraTokensJson }, 'id'>
+  globalTokens: EntityTable<{ id: number; data: OrbitTokensJson }, 'id'>
 }
 
 const db = new Dexie('OrbitThemeBuilder') as OrbitDatabase
@@ -51,12 +51,12 @@ export const dbOperations = {
   },
 
   // Global tokens operations (single entry)
-  async getGlobalTokens(): Promise<ClaraTokensJson | null> {
+  async getGlobalTokens(): Promise<OrbitTokensJson | null> {
     const entry = await db.globalTokens.get(1)
     return entry?.data ?? null
   },
 
-  async setGlobalTokens(tokens: ClaraTokensJson): Promise<void> {
+  async setGlobalTokens(tokens: OrbitTokensJson): Promise<void> {
     await db.globalTokens.put({ id: 1, data: tokens })
   },
 

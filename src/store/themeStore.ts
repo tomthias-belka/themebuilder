@@ -1,12 +1,13 @@
 import { create } from 'zustand'
 import { db, dbOperations } from '@/db/database'
-import type { Brand, ClaraTokensJson, FlattenedToken } from '@/types/tokens'
-import { flattenSemanticTokens, extractBrandNames, updateTokenValue, addBrandToTokens, removeBrandFromTokens } from '@/utils/tokenFlattener'
+import type { Brand, OrbitTokensJson, FlattenedToken } from '@/types/tokens'
+import { flattenSemanticTokens, extractBrandNames, updateTokenValue, addBrandToTokens, removeBrandFromTokens, addBrandWithCustomColors } from '@/utils/tokenFlattener'
+import type { GeneratedBrandColors, RadiusSize } from '@/types/wizard'
 import { createSemanticBrandExport, generateExportFilename, downloadJson, mergeSemanticBrandImport } from '@/utils/exportFormat'
 
 interface ThemeState {
   // Data
-  tokens: ClaraTokensJson | null
+  tokens: OrbitTokensJson | null
   brands: Brand[]
   selectedBrand: string | null
   flattenedTokens: FlattenedToken[]
@@ -18,13 +19,14 @@ interface ThemeState {
 
   // Actions
   initialize: () => Promise<void>
-  loadTokensFromFile: (jsonData: ClaraTokensJson) => Promise<void>
+  loadTokensFromFile: (jsonData: OrbitTokensJson) => Promise<void>
   selectBrand: (brandName: string) => void
   updateToken: (path: string, newValue: string) => void
   saveChanges: () => Promise<void>
 
   // Brand management
   addBrand: (brandName: string, sourceBrand?: string) => Promise<void>
+  addBrandWithColors: (brandName: string, templateBrand: string, brandColors: GeneratedBrandColors, radius?: RadiusSize) => Promise<void>
   deleteBrand: (brandName: string) => Promise<void>
 
   // Export/Import
@@ -51,13 +53,13 @@ export const useThemeStore = create<ThemeState>((set, get) => ({
       let storedTokens = await dbOperations.getGlobalTokens()
       let storedBrands = await dbOperations.getAllBrands()
 
-      // If no tokens in DB, preload from public/clara-tokens.json
+      // If no tokens in DB, preload from public/orbit-tokens.json
       if (!storedTokens) {
         try {
           const basePath = import.meta.env.BASE_URL || '/'
-          const response = await fetch(`${basePath}clara-tokens.json`)
+          const response = await fetch(`${basePath}orbit-tokens.json`)
           if (response.ok) {
-            const defaultTokens = await response.json() as ClaraTokensJson
+            const defaultTokens = await response.json() as OrbitTokensJson
 
             // Validate structure
             if (defaultTokens.global && defaultTokens.semantic) {
@@ -107,7 +109,7 @@ export const useThemeStore = create<ThemeState>((set, get) => ({
   },
 
   // Load tokens from uploaded JSON file
-  loadTokensFromFile: async (jsonData: ClaraTokensJson) => {
+  loadTokensFromFile: async (jsonData: OrbitTokensJson) => {
     set({ isLoading: true })
 
     try {
@@ -223,6 +225,37 @@ export const useThemeStore = create<ThemeState>((set, get) => ({
     })
   },
 
+  // Add a new brand with custom generated colors
+  addBrandWithColors: async (brandName: string, templateBrand: string, brandColors: GeneratedBrandColors, radius?: RadiusSize) => {
+    const { tokens } = get()
+    if (!tokens) return
+
+    // Check if brand already exists
+    const existingBrands = extractBrandNames(tokens)
+    if (existingBrands.includes(brandName)) {
+      throw new Error(`Brand "${brandName}" already exists`)
+    }
+
+    // Add brand to tokens with custom colors and optional radius
+    const updatedTokens = addBrandWithCustomColors(tokens, brandName, templateBrand, brandColors, radius)
+
+    // Add to IndexedDB
+    await dbOperations.addBrand(brandName)
+    await dbOperations.setGlobalTokens(updatedTokens)
+
+    // Update state
+    const brands = await dbOperations.getAllBrands()
+    const flattened = flattenSemanticTokens(updatedTokens, brandName)
+
+    set({
+      tokens: updatedTokens,
+      brands,
+      selectedBrand: brandName,
+      flattenedTokens: flattened,
+      hasUnsavedChanges: false
+    })
+  },
+
   // Delete a brand
   deleteBrand: async (brandName: string) => {
     const { tokens, selectedBrand } = get()
@@ -282,7 +315,7 @@ export const useThemeStore = create<ThemeState>((set, get) => ({
   importSemanticBrand: async (jsonData: unknown) => {
     const { tokens } = get()
     if (!tokens) {
-      return { success: false, error: 'No tokens loaded. Please upload clara-tokens.json first.' }
+      return { success: false, error: 'No tokens loaded. Please upload orbit-tokens.json first.' }
     }
 
     try {

@@ -32,7 +32,7 @@ export function MainContent({ onUploadTokens, children }: MainContentProps) {
           </div>
           <h3 className="text-lg font-semibold mb-2">Get Started</h3>
           <p className="text-muted-foreground mb-4">
-            Upload your clara-tokens.json file to start managing your themes.
+            Upload your orbit-tokens.json file to start managing your themes.
           </p>
           <Button onClick={onUploadTokens}>
             <Upload className="h-4 w-4 mr-2" />

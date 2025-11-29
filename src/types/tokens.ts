@@ -1,4 +1,4 @@
-// Token types matching the clara-tokens.json structure
+// Token types matching the orbit-tokens.json structure
 
 export type TokenType =
   | 'color'
@@ -83,8 +83,8 @@ export interface SemanticTokens {
   [key: string]: SemanticBrand | SemanticColors | TokenGroup | undefined
 }
 
-// Complete clara-tokens.json structure
-export interface ClaraTokensJson {
+// Complete orbit-tokens.json structure
+export interface OrbitTokensJson {
   global: GlobalTokens
   semantic: SemanticTokens
 }

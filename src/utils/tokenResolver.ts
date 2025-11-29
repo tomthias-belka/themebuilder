@@ -1,4 +1,4 @@
-import type { ClaraTokensJson, TokenValue, AliasSuggestion } from '@/types/tokens'
+import type { OrbitTokensJson, TokenValue, AliasSuggestion } from '@/types/tokens'
 
 /**
  * Checks if a value is an alias reference
@@ -44,7 +44,7 @@ function getValueByPath(obj: unknown, path: string): unknown {
  */
 export function resolveTokenValue(
   value: TokenValue,
-  tokens: ClaraTokensJson,
+  tokens: OrbitTokensJson,
   brandName: string,
   maxDepth = 10
 ): string {
@@ -95,7 +95,7 @@ export function resolveTokenValue(
 /**
  * Gets all available aliases from the global tokens for autocomplete
  */
-export function getGlobalAliases(tokens: ClaraTokensJson): AliasSuggestion[] {
+export function getGlobalAliases(tokens: OrbitTokensJson): AliasSuggestion[] {
   const suggestions: AliasSuggestion[] = []
 
   function traverseGlobal(obj: unknown, path: string, category: string) {
@@ -129,7 +129,7 @@ export function getGlobalAliases(tokens: ClaraTokensJson): AliasSuggestion[] {
  * Gets semantic aliases (brand references) for autocomplete
  */
 export function getSemanticAliases(
-  tokens: ClaraTokensJson,
+  tokens: OrbitTokensJson,
   brandName: string
 ): AliasSuggestion[] {
   const suggestions: AliasSuggestion[] = []
@@ -172,7 +172,7 @@ export function getSemanticAliases(
  * Gets all aliases (global + semantic brand) for autocomplete
  */
 export function getAllAliases(
-  tokens: ClaraTokensJson,
+  tokens: OrbitTokensJson,
   brandName: string
 ): AliasSuggestion[] {
   return [
@@ -184,7 +184,7 @@ export function getAllAliases(
 /**
  * Validates if an alias exists in the tokens
  */
-export function isValidAlias(alias: TokenValue, tokens: ClaraTokensJson): boolean {
+export function isValidAlias(alias: TokenValue, tokens: OrbitTokensJson): boolean {
   if (!isAlias(alias)) return false
 
   const path = extractAliasPath(alias)

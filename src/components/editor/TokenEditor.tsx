@@ -13,7 +13,7 @@ import {
   TableRow,
 } from '@/components/ui/table'
 import { Badge } from '@/components/ui/badge'
-import type { ClaraTokensJson, FlattenedToken } from '@/types/tokens'
+import type { OrbitTokensJson, FlattenedToken } from '@/types/tokens'
 
 export function TokenEditor() {
   const { tokens, selectedBrand, flattenedTokens, updateToken } = useThemeStore()
@@ -60,7 +60,7 @@ export function TokenEditor() {
 interface TokenSectionProps {
   title: string
   tokens: FlattenedToken[]
-  allTokens: ClaraTokensJson
+  allTokens: OrbitTokensJson
   brandName: string
   onUpdate: (path: string, value: string) => void
 }
@@ -99,7 +99,7 @@ function TokenSection({ title, tokens, allTokens, brandName, onUpdate }: TokenSe
 
 interface TokenRowProps {
   token: FlattenedToken
-  allTokens: ClaraTokensJson
+  allTokens: OrbitTokensJson
   brandName: string
   onUpdate: (path: string, value: string) => void
 }
