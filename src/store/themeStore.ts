@@ -16,6 +16,8 @@ interface ThemeState {
   isLoading: boolean
   isInitialized: boolean
   hasUnsavedChanges: boolean
+  viewMode: 'table' | 'json'
+  jsonEditorError: string | null
 
   // Actions
   initialize: () => Promise<void>
@@ -32,6 +34,11 @@ interface ThemeState {
   // Export/Import
   exportSemanticBrand: (brandName?: string) => void
   importSemanticBrand: (jsonData: unknown) => Promise<{ success: boolean; brandName?: string; error?: string }>
+
+  // View Mode
+  setViewMode: (mode: 'table' | 'json') => void
+  setJsonEditorError: (error: string | null) => void
+  updateTokensFromJson: (jsonString: string) => { success: boolean; error?: string }
 }
 
 export const useThemeStore = create<ThemeState>((set, get) => ({
@@ -43,6 +50,8 @@ export const useThemeStore = create<ThemeState>((set, get) => ({
   isLoading: false,
   isInitialized: false,
   hasUnsavedChanges: false,
+  viewMode: 'table',
+  jsonEditorError: null,
 
   // Initialize from IndexedDB or preload default tokens
   initialize: async () => {
@@ -355,6 +364,56 @@ export const useThemeStore = create<ThemeState>((set, get) => ({
     } catch (error) {
       console.error('Failed to import semantic brand:', error)
       return { success: false, error: String(error) }
+    }
+  },
+
+  // View Mode Actions
+  setViewMode: (mode) => set({ viewMode: mode }),
+
+  setJsonEditorError: (error) => set({ jsonEditorError: error }),
+
+  updateTokensFromJson: (jsonString: string) => {
+    try {
+      const parsed = JSON.parse(jsonString) as OrbitTokensJson
+
+      // Validate structure
+      if (!parsed.global || !parsed.semantic) {
+        return { success: false, error: 'Invalid structure: missing "global" or "semantic" section' }
+      }
+
+      const { selectedBrand, brands: currentBrands } = get()
+      const newBrandNames = extractBrandNames(parsed)
+
+      // Update selected brand if it no longer exists
+      const newSelectedBrand = selectedBrand && newBrandNames.includes(selectedBrand)
+        ? selectedBrand
+        : newBrandNames[0] || null
+
+      const flattened = newSelectedBrand
+        ? flattenSemanticTokens(parsed, newSelectedBrand)
+        : []
+
+      // Create updated brands list with IDs from current brands where possible
+      const now = new Date()
+      const updatedBrands: Brand[] = newBrandNames.map(name => {
+        const existing = currentBrands.find(b => b.name === name)
+        return existing || { name, createdAt: now, updatedAt: now }
+      })
+
+      set({
+        tokens: parsed,
+        brands: updatedBrands,
+        selectedBrand: newSelectedBrand,
+        flattenedTokens: flattened,
+        hasUnsavedChanges: true,
+        jsonEditorError: null
+      })
+
+      return { success: true }
+    } catch (e) {
+      const error = e instanceof Error ? e.message : 'Invalid JSON'
+      set({ jsonEditorError: error })
+      return { success: false, error }
     }
   }
 }))

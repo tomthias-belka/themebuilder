@@ -2,6 +2,7 @@ import { useThemeStore } from '@/store/themeStore'
 import { ScrollArea } from '@/components/ui/scroll-area'
 import { Upload } from 'lucide-react'
 import { Button } from '@/components/ui/button'
+import { JsonEditor } from '@/components/editor/JsonEditor'
 
 interface MainContentProps {
   onUploadTokens: () => void
@@ -9,7 +10,7 @@ interface MainContentProps {
 }
 
 export function MainContent({ onUploadTokens, children }: MainContentProps) {
-  const { tokens, selectedBrand, isLoading } = useThemeStore()
+  const { tokens, selectedBrand, isLoading, viewMode } = useThemeStore()
 
   if (isLoading) {
     return (
@@ -57,7 +58,16 @@ export function MainContent({ onUploadTokens, children }: MainContentProps) {
     )
   }
 
-  // Show content (token editor)
+  // Show JSON Editor
+  if (viewMode === 'json') {
+    return (
+      <div className="flex-1 flex flex-col min-h-0">
+        <JsonEditor />
+      </div>
+    )
+  }
+
+  // Show Table (token editor)
   return (
     <ScrollArea className="flex-1">
       <div className="p-6">

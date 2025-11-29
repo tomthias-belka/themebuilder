@@ -8,6 +8,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
+import { ViewModeToggle } from '@/components/ui/view-mode-toggle'
 
 interface HeaderProps {
   onUploadTokens: () => void
@@ -15,7 +16,7 @@ interface HeaderProps {
 }
 
 export function Header({ onUploadTokens, onUploadSemanticBrand }: HeaderProps) {
-  const { tokens, selectedBrand, exportSemanticBrand, hasUnsavedChanges, saveChanges } = useThemeStore()
+  const { tokens, selectedBrand, exportSemanticBrand, hasUnsavedChanges, saveChanges, viewMode, setViewMode } = useThemeStore()
 
   const handleExport = () => {
     if (selectedBrand) {
@@ -48,6 +49,11 @@ export function Header({ onUploadTokens, onUploadSemanticBrand }: HeaderProps) {
       </div>
 
       <div className="flex items-center gap-2">
+        {/* View Mode Toggle */}
+        {tokens && selectedBrand && (
+          <ViewModeToggle value={viewMode} onChange={setViewMode} />
+        )}
+
         {/* Save Button */}
         {hasUnsavedChanges && (
           <Button variant="outline" size="sm" onClick={handleSave}>
