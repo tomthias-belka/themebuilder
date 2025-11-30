@@ -192,8 +192,9 @@ export function ValuePicker({ value, type, onChange, className }: ValuePickerPro
           <ScrollArea className="max-h-64">
             <div ref={listRef} className="p-1">
               {suggestions.map((suggestion, index) => {
-                const suggestionIsColor = suggestion.resolvedValue.startsWith('#') ||
-                  suggestion.resolvedValue.startsWith('rgb')
+                const suggestionIsColor = suggestion.resolvedValue &&
+                  (suggestion.resolvedValue.startsWith('#') ||
+                  suggestion.resolvedValue.startsWith('rgb'))
 
                 return (
                   <div
@@ -218,9 +219,11 @@ export function ValuePicker({ value, type, onChange, className }: ValuePickerPro
                     )}
                     <div className="flex-1 min-w-0 flex items-center justify-between gap-2">
                       <span className="font-mono truncate">{suggestion.alias}</span>
-                      <span className="text-xs text-muted-foreground truncate">
-                        {suggestion.resolvedValue}
-                      </span>
+                      {suggestion.resolvedValue && (
+                        <span className="text-xs text-muted-foreground truncate">
+                          {suggestion.resolvedValue}
+                        </span>
+                      )}
                     </div>
                   </div>
                 )
