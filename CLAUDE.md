@@ -69,3 +69,18 @@ Uses `@/` alias pointing to `src/` directory (configured in [vite.config.ts](vit
   }
 }
 ```
+
+## Deployment
+
+**Live Site**: https://tomthias-belka.github.io/themebuilder/
+
+### How to Deploy
+
+The project uses **GitHub Actions** for deployment to GitHub Pages. To deploy:
+
+1. Commit your changes to the `main` branch
+2. Push to origin: `git push origin main`
+3. GitHub Actions workflow will automatically build and deploy
+4. Changes will be live within a few minutes
+
+**Important**: Do NOT use `gh-pages` branch or `npx gh-pages` commands - the deployment is configured via GitHub Actions workflow that triggers on push to `main` branch.
