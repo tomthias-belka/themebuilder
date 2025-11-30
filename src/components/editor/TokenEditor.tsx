@@ -110,8 +110,11 @@ function TokenRow({ token, allTokens, brandName, onUpdate }: TokenRowProps) {
     ? resolveTokenValue(token.value, allTokens, brandName)
     : token.value
 
-  // Get just the last part of the path for display
-  const displayName = token.path.split('.').pop() || token.path
+  // Parse path for tree-like display
+  const pathParts = token.path.split('.')
+  const displayName = pathParts.pop() || token.path
+  const parentPath = pathParts.slice(1).join('.') // Skip category (brand/colors)
+  const depth = pathParts.length
 
   const handleValueChange = (newValue: string) => {
     onUpdate(token.path, newValue)
@@ -119,8 +122,16 @@ function TokenRow({ token, allTokens, brandName, onUpdate }: TokenRowProps) {
 
   return (
     <TableRow>
-      <TableCell className="font-mono text-sm">
-        {displayName}
+      <TableCell className="font-mono text-sm" title={token.fullPath}>
+        <div
+          className="flex items-center gap-1.5"
+          style={{ paddingLeft: `${depth * 12}px` }}
+        >
+          {parentPath && (
+            <span className="text-muted-foreground text-xs">{parentPath}.</span>
+          )}
+          <span className="font-medium">{displayName}</span>
+        </div>
       </TableCell>
       <TableCell>
         {token.type === 'color' && (
