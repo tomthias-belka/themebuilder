@@ -1,8 +1,6 @@
 import { useMemo } from 'react'
 import { useThemeStore } from '@/store/themeStore'
 import { groupTokensByCategory } from '@/utils/tokenFlattener'
-import { resolveTokenValue, isAlias } from '@/utils/tokenResolver'
-import { ColorPreview } from './ColorPreview'
 import { AliasAutocomplete } from './AliasAutocomplete'
 import {
   Table,
@@ -13,7 +11,7 @@ import {
   TableRow,
 } from '@/components/ui/table'
 import { Badge } from '@/components/ui/badge'
-import type { OrbitTokensJson, FlattenedToken } from '@/types/tokens'
+import type { FlattenedToken } from '@/types/tokens'
 
 export function TokenEditor() {
   const { tokens, selectedBrand, flattenedTokens, updateToken } = useThemeStore()
@@ -45,8 +43,6 @@ export function TokenEditor() {
                 key={subcategory}
                 title={subcategory}
                 tokens={categoryTokens}
-                allTokens={tokens}
-                brandName={selectedBrand}
                 onUpdate={updateToken}
               />
             ))}
@@ -60,12 +56,10 @@ export function TokenEditor() {
 interface TokenSectionProps {
   title: string
   tokens: FlattenedToken[]
-  allTokens: OrbitTokensJson
-  brandName: string
   onUpdate: (path: string, value: string) => void
 }
 
-function TokenSection({ title, tokens, allTokens, brandName, onUpdate }: TokenSectionProps) {
+function TokenSection({ title, tokens, onUpdate }: TokenSectionProps) {
   return (
     <div className="mb-6">
       <h4 className="text-sm font-medium text-muted-foreground mb-2 capitalize">{title}</h4>
@@ -74,10 +68,9 @@ function TokenSection({ title, tokens, allTokens, brandName, onUpdate }: TokenSe
         <Table>
           <TableHeader>
             <TableRow>
-              <TableHead className="w-[200px]">Token</TableHead>
-              <TableHead className="w-[100px]">Preview</TableHead>
-              <TableHead>Value</TableHead>
-              <TableHead className="w-[100px]">Type</TableHead>
+              <TableHead className="w-[250px]">Token</TableHead>
+              <TableHead className="w-[280px]">Value</TableHead>
+              <TableHead className="w-[80px]">Type</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -85,8 +78,6 @@ function TokenSection({ title, tokens, allTokens, brandName, onUpdate }: TokenSe
               <TokenRow
                 key={token.path}
                 token={token}
-                allTokens={allTokens}
-                brandName={brandName}
                 onUpdate={onUpdate}
               />
             ))}
@@ -99,17 +90,10 @@ function TokenSection({ title, tokens, allTokens, brandName, onUpdate }: TokenSe
 
 interface TokenRowProps {
   token: FlattenedToken
-  allTokens: OrbitTokensJson
-  brandName: string
   onUpdate: (path: string, value: string) => void
 }
 
-function TokenRow({ token, allTokens, brandName, onUpdate }: TokenRowProps) {
-  // Resolve the token value to get the actual color
-  const resolvedValue = isAlias(token.value)
-    ? resolveTokenValue(token.value, allTokens, brandName)
-    : token.value
-
+function TokenRow({ token, onUpdate }: TokenRowProps) {
   // Parse path for tree-like display
   const pathParts = token.path.split('.')
   const displayName = pathParts.pop() || token.path
@@ -132,11 +116,6 @@ function TokenRow({ token, allTokens, brandName, onUpdate }: TokenRowProps) {
           )}
           <span className="font-medium">{displayName}</span>
         </div>
-      </TableCell>
-      <TableCell>
-        {token.type === 'color' && (
-          <ColorPreview color={resolvedValue} size="md" />
-        )}
       </TableCell>
       <TableCell>
         {token.type === 'color' ? (
