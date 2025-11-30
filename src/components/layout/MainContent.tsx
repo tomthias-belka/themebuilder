@@ -3,6 +3,7 @@ import { ScrollArea } from '@/components/ui/scroll-area'
 import { Upload } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { JsonEditor } from '@/components/editor/JsonEditor'
+import { TokenTreeNav } from '@/components/editor/TokenTreeNav'
 
 interface MainContentProps {
   onUploadTokens: () => void
@@ -67,12 +68,18 @@ export function MainContent({ onUploadTokens, children }: MainContentProps) {
     )
   }
 
-  // Show Table (token editor)
+  // Show Table (token editor) with optional token tree nav
   return (
-    <ScrollArea className="flex-1">
-      <div className="p-6">
-        {children}
-      </div>
-    </ScrollArea>
+    <div className="flex-1 flex min-h-0">
+      {/* Token Tree Navigation (collapsible) */}
+      <TokenTreeNav />
+
+      {/* Main Editor Area */}
+      <ScrollArea className="flex-1">
+        <div className="p-6">
+          {children}
+        </div>
+      </ScrollArea>
+    </div>
   )
 }

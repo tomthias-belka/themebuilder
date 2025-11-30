@@ -1,4 +1,4 @@
-import type { OrbitTokensJson, FlattenedToken, TokenType, TokenValue } from '@/types/tokens'
+import type { OrbitTokensJson, FlattenedToken, TokenType, TokenValue, TokenTreeNode } from '@/types/tokens'
 import type { GeneratedBrandColors, RadiusSize } from '@/types/wizard'
 
 // Radius mapping (duplicated here to avoid circular imports)
@@ -302,4 +302,70 @@ export function addBrandWithCustomColors(
   }
 
   return newTokens
+}
+
+/**
+ * Builds a tree structure from semantic tokens for navigation
+ * Returns an array of root nodes (brand, colors, etc.)
+ */
+export function buildTokenTree(
+  tokens: OrbitTokensJson,
+  brandName: string
+): TokenTreeNode[] {
+  const roots: TokenTreeNode[] = []
+
+  function buildNode(obj: unknown, name: string, path: string, brand: string): TokenTreeNode {
+    const node: TokenTreeNode = {
+      name,
+      path,
+      children: [],
+      tokenCount: 0
+    }
+
+    if (!obj || typeof obj !== 'object') return node
+
+    for (const [key, value] of Object.entries(obj)) {
+      const childPath = path ? `${path}.${key}` : key
+
+      if (value && typeof value === 'object' && '$value' in value && '$type' in value) {
+        // This is a token leaf node
+        const tokenValue = value as { $value: unknown }
+        if (typeof tokenValue.$value === 'object' && tokenValue.$value !== null) {
+          if (brand in (tokenValue.$value as Record<string, unknown>)) {
+            node.children.push({
+              name: key,
+              path: childPath,
+              children: [],
+              tokenCount: 1
+            })
+          }
+        }
+      } else if (value && typeof value === 'object') {
+        // This is a group, recurse
+        const childNode = buildNode(value, key, childPath, brand)
+        if (childNode.tokenCount > 0 || childNode.children.length > 0) {
+          node.children.push(childNode)
+        }
+      }
+    }
+
+    // Calculate total token count
+    node.tokenCount = node.children.reduce((sum, child) => sum + child.tokenCount, 0)
+
+    return node
+  }
+
+  // Build tree from semantic tokens
+  if (tokens.semantic) {
+    for (const [key, value] of Object.entries(tokens.semantic)) {
+      if (value && typeof value === 'object') {
+        const node = buildNode(value, key, key, brandName)
+        if (node.tokenCount > 0 || node.children.length > 0) {
+          roots.push(node)
+        }
+      }
+    }
+  }
+
+  return roots
 }

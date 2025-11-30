@@ -1,7 +1,7 @@
 import { useMemo } from 'react'
 import { useThemeStore } from '@/store/themeStore'
 import { groupTokensByCategory } from '@/utils/tokenFlattener'
-import { AliasAutocomplete } from './AliasAutocomplete'
+import { ValuePicker } from './ValuePicker'
 import {
   Table,
   TableBody,
@@ -118,14 +118,11 @@ function TokenRow({ token, onUpdate }: TokenRowProps) {
         </div>
       </TableCell>
       <TableCell>
-        {token.type === 'color' ? (
-          <AliasAutocomplete
-            value={token.value}
-            onChange={handleValueChange}
-          />
-        ) : (
-          <span className="font-mono text-sm">{token.value}</span>
-        )}
+        <ValuePicker
+          value={token.value}
+          type={token.type}
+          onChange={handleValueChange}
+        />
       </TableCell>
       <TableCell>
         <Badge variant="outline" className="text-xs">

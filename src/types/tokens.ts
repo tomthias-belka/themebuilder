@@ -115,6 +115,14 @@ export interface AliasSuggestion {
   category: string // e.g., "colors"
 }
 
+// Tree structure for navigation sidebar
+export interface TokenTreeNode {
+  name: string
+  path: string
+  children: TokenTreeNode[]
+  tokenCount: number
+}
+
 // Export format - single brand semantic tokens
 export interface SemanticBrandJson {
   semantic: {

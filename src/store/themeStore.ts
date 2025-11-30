@@ -18,6 +18,8 @@ interface ThemeState {
   hasUnsavedChanges: boolean
   viewMode: 'table' | 'json'
   jsonEditorError: string | null
+  selectedTokenPath: string | null
+  isTokenTreeOpen: boolean
 
   // Actions
   initialize: () => Promise<void>
@@ -39,6 +41,10 @@ interface ThemeState {
   setViewMode: (mode: 'table' | 'json') => void
   setJsonEditorError: (error: string | null) => void
   updateTokensFromJson: (jsonString: string) => { success: boolean; error?: string }
+
+  // Token Navigation
+  setSelectedTokenPath: (path: string | null) => void
+  setTokenTreeOpen: (open: boolean) => void
 }
 
 export const useThemeStore = create<ThemeState>((set, get) => ({
@@ -52,6 +58,8 @@ export const useThemeStore = create<ThemeState>((set, get) => ({
   hasUnsavedChanges: false,
   viewMode: 'table',
   jsonEditorError: null,
+  selectedTokenPath: null,
+  isTokenTreeOpen: false,
 
   // Initialize from IndexedDB or preload default tokens
   initialize: async () => {
@@ -415,5 +423,9 @@ export const useThemeStore = create<ThemeState>((set, get) => ({
       set({ jsonEditorError: error })
       return { success: false, error }
     }
-  }
+  },
+
+  // Token Navigation
+  setSelectedTokenPath: (path) => set({ selectedTokenPath: path }),
+  setTokenTreeOpen: (open) => set({ isTokenTreeOpen: open })
 }))
