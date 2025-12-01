@@ -10,6 +10,7 @@ import {
   DeleteThemeModal,
 } from '@/components/modals'
 import { ThemeBuilderWizard } from '@/components/wizard'
+import { PasswordGate } from '@/components/auth/PasswordGate'
 
 function App() {
   const { toast } = useToast()
@@ -51,7 +52,7 @@ function App() {
   }
 
   return (
-    <>
+    <PasswordGate>
       <AppLayout
         onUploadTokens={() => setUploadTokensOpen(true)}
         onUploadSemanticBrand={() => setImportSemanticOpen(true)}
@@ -81,7 +82,7 @@ function App() {
       />
 
       <Toaster />
-    </>
+    </PasswordGate>
   )
 }
 

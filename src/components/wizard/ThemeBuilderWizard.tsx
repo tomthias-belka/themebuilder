@@ -33,7 +33,6 @@ const getInitialConfig = (): WizardConfig => ({
 
 export function ThemeBuilderWizard({ open, onOpenChange }: ThemeBuilderWizardProps) {
   const [config, setConfig] = useState<WizardConfig>(getInitialConfig())
-  const [activeTab, setActiveTab] = useState<'basic' | 'advanced'>('basic')
   const [isCreating, setIsCreating] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
@@ -91,14 +90,13 @@ export function ThemeBuilderWizard({ open, onOpenChange }: ThemeBuilderWizardPro
 
   const handleClose = () => {
     setConfig(getInitialConfig())
-    setActiveTab('basic')
     setError(null)
     onOpenChange(false)
   }
 
   return (
     <Dialog open={open} onOpenChange={handleClose}>
-      <DialogContent className="max-w-6xl h-[85vh] p-0 gap-0 flex flex-col">
+      <DialogContent className="max-w-6xl h-[85vh] p-0 gap-0 flex flex-col [&>button]:hidden">
         {/* Header */}
         <div className="flex items-center justify-between px-6 py-4 border-b">
           <h2 className="text-lg font-semibold">Create New Theme</h2>
@@ -119,8 +117,6 @@ export function ThemeBuilderWizard({ open, onOpenChange }: ThemeBuilderWizardPro
             <ConfigPanel
               config={config}
               onChange={handleConfigChange}
-              activeTab={activeTab}
-              onTabChange={setActiveTab}
               existingBrands={existingBrands}
               error={error}
             />
