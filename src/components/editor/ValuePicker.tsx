@@ -34,12 +34,13 @@ export function ValuePicker({ value, type, onChange, className }: ValuePickerPro
     : []
 
   // Filter suggestions by type and search
+  const searchTerm = (search || '').toString().toLowerCase()
   const suggestions = allAliases
     .filter((alias) => {
       // Filter by search term
-      const matchesSearch = alias.alias.toLowerCase().includes(search.toLowerCase()) ||
-        alias.path.toLowerCase().includes(search.toLowerCase())
-      return matchesSearch
+      const aliasStr = (alias.alias || '').toString().toLowerCase()
+      const pathStr = (alias.path || '').toString().toLowerCase()
+      return aliasStr.includes(searchTerm) || pathStr.includes(searchTerm)
     })
     .slice(0, 50)
 
