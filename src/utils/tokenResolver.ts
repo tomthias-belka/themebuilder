@@ -1,4 +1,4 @@
-import type { OrbitTokensJson, TokenValue, AliasSuggestion } from '@/types/tokens'
+import type { OrbitTokensJson, TokenValue, AliasSuggestion, TokenType } from '@/types/tokens'
 
 /**
  * Checks if a value is an alias reference
@@ -202,4 +202,81 @@ export function isValidAlias(alias: TokenValue, tokens: OrbitTokensJson): boolea
   }
 
   return false
+}
+
+/**
+ * Mapping from token type to global categories
+ */
+const TYPE_TO_CATEGORIES: Record<string, string[]> = {
+  color: ['colors'],
+  spacing: ['spacing'],
+  borderRadius: ['radius'],
+  number: ['spacing', 'radius'],
+}
+
+/**
+ * Gets global aliases filtered by token type
+ * - color → colors.*
+ * - spacing → spacing.*
+ * - borderRadius → radius.*
+ * - number → spacing.* + radius.* (both)
+ */
+export function getGlobalAliasesByType(
+  tokens: OrbitTokensJson,
+  tokenType: TokenType
+): AliasSuggestion[] {
+  const suggestions: AliasSuggestion[] = []
+  const categories = TYPE_TO_CATEGORIES[tokenType] || ['colors']
+
+  function traverseCategory(obj: unknown, path: string, rootCategory: string) {
+    if (!obj || typeof obj !== 'object') return
+
+    for (const [key, value] of Object.entries(obj)) {
+      const newPath = path ? `${path}.${key}` : key
+
+      if (value && typeof value === 'object' && '$value' in value && '$type' in value) {
+        const tokenValue = value as { $value: string | number; $type: string }
+        const resolvedValue = typeof tokenValue.$value === 'number'
+          ? `${tokenValue.$value}${tokenValue.$type === 'spacing' ? 'px' : ''}`
+          : String(tokenValue.$value)
+
+        suggestions.push({
+          alias: `{${newPath}}`,
+          resolvedValue,
+          path: newPath,
+          category: rootCategory
+        })
+      } else if (value && typeof value === 'object') {
+        traverseCategory(value, newPath, rootCategory)
+      }
+    }
+  }
+
+  // Traverse only the relevant categories
+  for (const category of categories) {
+    const categoryObj = tokens.global[category as keyof typeof tokens.global]
+    if (categoryObj) {
+      traverseCategory(categoryObj, category, category)
+    }
+  }
+
+  return suggestions
+}
+
+/**
+ * Gets all aliases filtered by token type (global + semantic brand for colors)
+ */
+export function getAllAliasesByType(
+  tokens: OrbitTokensJson,
+  brandName: string,
+  tokenType: TokenType
+): AliasSuggestion[] {
+  const globalAliases = getGlobalAliasesByType(tokens, tokenType)
+
+  // For color tokens, also include semantic brand aliases
+  if (tokenType === 'color') {
+    return [...globalAliases, ...getSemanticAliases(tokens, brandName)]
+  }
+
+  return globalAliases
 }

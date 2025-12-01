@@ -1,13 +1,6 @@
 import type { OrbitTokensJson, FlattenedToken, TokenType, TokenValue, TokenTreeNode } from '@/types/tokens'
 import type { GeneratedBrandColors, RadiusSize } from '@/types/wizard'
-
-// Radius mapping (duplicated here to avoid circular imports)
-const RADIUS_TOKEN_MAP: Record<RadiusSize, string> = {
-  sm: '{radius.xs}',
-  md: '{radius.sm}',
-  lg: '{radius.md}',
-  xl: '{radius.lg}',
-}
+import { getRadiusAlias } from '@/types/wizard'
 
 /**
  * Flattens the semantic tokens structure for display in the editor table
@@ -297,8 +290,15 @@ export function addBrandWithCustomColors(
     const radiusToken = brand.radius as unknown
     if (radiusToken && typeof radiusToken === 'object' && '$value' in (radiusToken as Record<string, unknown>)) {
       const tokenWithValue = radiusToken as { $value: Record<string, TokenValue> }
-      tokenWithValue.$value[newBrandName] = RADIUS_TOKEN_MAP[radius]
+      tokenWithValue.$value[newBrandName] = getRadiusAlias(radius)
     }
+  }
+
+  // Fix: Set the theme token value to the new brand name (not copied from template)
+  const themeToken = brand.theme as unknown
+  if (themeToken && typeof themeToken === 'object' && '$value' in (themeToken as Record<string, unknown>)) {
+    const tokenWithValue = themeToken as { $value: Record<string, TokenValue> }
+    tokenWithValue.$value[newBrandName] = newBrandName
   }
 
   return newTokens

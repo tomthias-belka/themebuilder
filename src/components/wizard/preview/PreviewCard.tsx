@@ -1,4 +1,5 @@
 import { usePreviewTheme } from './ThemePreviewProvider'
+import { PreviewButton } from './PreviewButton'
 
 export function PreviewCard() {
   const { theme } = usePreviewTheme()
@@ -15,26 +16,10 @@ export function PreviewCard() {
       <p className="text-sm text-gray-600 mb-4">
         Your dashboard is ready. Start exploring your data.
       </p>
-      <div className="flex gap-2">
-        <button
-          className="px-4 py-2 text-sm font-medium text-white transition-colors"
-          style={{
-            backgroundColor: `var(--preview-primary, ${theme.primary})`,
-            borderRadius: `var(--preview-radius, ${theme.radius})`,
-          }}
-        >
-          Get Started
-        </button>
-        <button
-          className="px-4 py-2 text-sm font-medium border transition-colors"
-          style={{
-            borderColor: `var(--preview-secondary, ${theme.secondary})`,
-            color: `var(--preview-secondary, ${theme.secondary})`,
-            borderRadius: `var(--preview-radius, ${theme.radius})`,
-          }}
-        >
-          Learn More
-        </button>
+      <div className="flex gap-2 flex-wrap">
+        <PreviewButton variant="primary">Get Started</PreviewButton>
+        <PreviewButton variant="outline">Learn More</PreviewButton>
+        <PreviewButton variant="primary" disabled>Disabled</PreviewButton>
       </div>
     </div>
   )

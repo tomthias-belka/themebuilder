@@ -1,6 +1,6 @@
 import { Button } from '@/components/ui/button'
 import { useThemeStore } from '@/store/themeStore'
-import { Upload, Download, FileUp, Save } from 'lucide-react'
+import { Upload, Download, FileUp, Save, FileDown } from 'lucide-react'
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -16,12 +16,16 @@ interface HeaderProps {
 }
 
 export function Header({ onUploadTokens, onUploadSemanticBrand }: HeaderProps) {
-  const { tokens, selectedBrand, exportSemanticBrand, hasUnsavedChanges, saveChanges, viewMode, setViewMode } = useThemeStore()
+  const { tokens, selectedBrand, exportSemanticBrand, exportFullTokens, hasUnsavedChanges, saveChanges, viewMode, setViewMode } = useThemeStore()
 
-  const handleExport = () => {
+  const handleExportBrand = () => {
     if (selectedBrand) {
       exportSemanticBrand(selectedBrand)
     }
+  }
+
+  const handleExportAll = () => {
+    exportFullTokens()
   }
 
   const handleSave = async () => {
@@ -83,16 +87,26 @@ export function Header({ onUploadTokens, onUploadSemanticBrand }: HeaderProps) {
           </DropdownMenuContent>
         </DropdownMenu>
 
-        {/* Export Button */}
-        <Button
-          variant="default"
-          size="sm"
-          onClick={handleExport}
-          disabled={!tokens || !selectedBrand}
-        >
-          <Download className="h-4 w-4 mr-2" />
-          Export
-        </Button>
+        {/* Export Menu */}
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button variant="default" size="sm" disabled={!tokens}>
+              <Download className="h-4 w-4 mr-2" />
+              Export
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end">
+            <DropdownMenuItem onClick={handleExportBrand} disabled={!selectedBrand}>
+              <FileDown className="h-4 w-4 mr-2" />
+              Export {selectedBrand || 'Brand'} (semantic)
+            </DropdownMenuItem>
+            <DropdownMenuSeparator />
+            <DropdownMenuItem onClick={handleExportAll}>
+              <Download className="h-4 w-4 mr-2" />
+              Export All (orbit-tokens.json)
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
       </div>
     </header>
   )

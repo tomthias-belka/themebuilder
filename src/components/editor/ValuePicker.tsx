@@ -1,7 +1,7 @@
 import { useState, useRef, useEffect, useCallback } from 'react'
 import { createPortal } from 'react-dom'
 import { useThemeStore } from '@/store/themeStore'
-import { getAllAliases, isAlias, resolveTokenValue } from '@/utils/tokenResolver'
+import { getAllAliasesByType, isAlias, resolveTokenValue } from '@/utils/tokenResolver'
 import { ScrollArea } from '@/components/ui/scroll-area'
 import { cn } from '@/lib/utils'
 import type { TokenType, AliasSuggestion } from '@/types/tokens'
@@ -28,9 +28,9 @@ export function ValuePicker({ value, type, onChange, className }: ValuePickerPro
     ? resolveTokenValue(value, tokens, selectedBrand)
     : value
 
-  // Get suggestions based on type
+  // Get suggestions based on token type (filtered by type)
   const allAliases = tokens && selectedBrand
-    ? getAllAliases(tokens, selectedBrand)
+    ? getAllAliasesByType(tokens, selectedBrand, type)
     : []
 
   // Filter suggestions by type and search

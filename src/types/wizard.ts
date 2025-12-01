@@ -56,7 +56,8 @@ export interface ColorFamily {
 }
 
 // Extended wizard config for v2 with radius and font
-export type RadiusSize = 'sm' | 'md' | 'lg' | 'xl'
+// RadiusSize is now a string to support all radius values from the JSON
+export type RadiusSize = string
 
 export interface WizardConfig {
   themeName: string
@@ -68,12 +69,9 @@ export interface WizardConfig {
   radius: RadiusSize
 }
 
-// Radius mapping to global.radius tokens
-export const RADIUS_MAP: Record<RadiusSize, string> = {
-  sm: '{radius.xs}',
-  md: '{radius.sm}',
-  lg: '{radius.md}',
-  xl: '{radius.lg}',
+// Helper to convert radius key to alias format
+export function getRadiusAlias(radiusKey: string): string {
+  return `{radius.${radiusKey}}`
 }
 
 // Preview theme values (resolved hex colors)

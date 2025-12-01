@@ -1,7 +1,9 @@
+import { useState } from 'react'
 import { usePreviewTheme } from './ThemePreviewProvider'
 
 export function PreviewStats() {
   const { theme } = usePreviewTheme()
+  const [hoveredBar, setHoveredBar] = useState<number | null>(null)
 
   return (
     <div
@@ -18,7 +20,7 @@ export function PreviewStats() {
           style={{
             backgroundColor: `var(--preview-accent-soft, ${theme.accentSoft})`,
             color: `var(--preview-accent, ${theme.accent})`,
-            borderRadius: '9999px',
+            borderRadius: `var(--preview-radius, ${theme.radius})`,
           }}
         >
           +12.5%
@@ -37,15 +39,19 @@ export function PreviewStats() {
         {[40, 65, 45, 80, 55, 70, 90].map((height, i) => (
           <div
             key={i}
-            className="flex-1 transition-all"
+            className="flex-1 transition-all cursor-pointer"
             style={{
               height: `${height}%`,
               backgroundColor:
-                i === 6
+                i === 6 || hoveredBar === i
                   ? `var(--preview-primary, ${theme.primary})`
                   : `var(--preview-primary-soft, ${theme.primarySoft})`,
-              borderRadius: '2px',
+              borderRadius: `var(--preview-radius, ${theme.radius})`,
+              transform: hoveredBar === i ? 'scaleY(1.05)' : 'scaleY(1)',
+              transformOrigin: 'bottom',
             }}
+            onMouseEnter={() => setHoveredBar(i)}
+            onMouseLeave={() => setHoveredBar(null)}
           />
         ))}
       </div>

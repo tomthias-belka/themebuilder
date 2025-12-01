@@ -1,3 +1,4 @@
+import { useState } from 'react'
 import { usePreviewTheme } from './ThemePreviewProvider'
 
 const mockData = [
@@ -8,6 +9,7 @@ const mockData = [
 
 export function PreviewTable() {
   const { theme } = usePreviewTheme()
+  const [hoveredRow, setHoveredRow] = useState<number | null>(null)
 
   return (
     <div
@@ -32,7 +34,15 @@ export function PreviewTable() {
         </thead>
         <tbody>
           {mockData.map((row, i) => (
-            <tr key={i} className="border-t hover:bg-gray-50 transition-colors">
+            <tr
+              key={i}
+              className="border-t transition-colors cursor-pointer"
+              style={{
+                backgroundColor: hoveredRow === i ? theme.primarySoft : 'transparent',
+              }}
+              onMouseEnter={() => setHoveredRow(i)}
+              onMouseLeave={() => setHoveredRow(null)}
+            >
               <td className="px-4 py-3">{row.name}</td>
               <td className="px-4 py-3">
                 <span
@@ -46,7 +56,7 @@ export function PreviewTable() {
                       row.status === 'Active'
                         ? `var(--preview-primary-dark, ${theme.primaryDark})`
                         : `var(--preview-accent, ${theme.accent})`,
-                    borderRadius: '9999px',
+                    borderRadius: `var(--preview-radius, ${theme.radius})`,
                   }}
                 >
                   {row.status}

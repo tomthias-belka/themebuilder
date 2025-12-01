@@ -1,7 +1,16 @@
+import { useState } from 'react'
 import { usePreviewTheme } from './ThemePreviewProvider'
 
 export function PreviewChat() {
   const { theme } = usePreviewTheme()
+  const [isSendHovered, setIsSendHovered] = useState(false)
+  const [isSendPressed, setIsSendPressed] = useState(false)
+
+  const getSendButtonBg = () => {
+    if (isSendPressed) return theme.primaryDark
+    if (isSendHovered) return theme.primaryDark
+    return theme.primary
+  }
 
   return (
     <div
@@ -71,18 +80,32 @@ export function PreviewChat() {
         <input
           type="text"
           placeholder="Type a message..."
-          className="flex-1 px-3 py-2 text-sm border"
+          className="flex-1 px-3 py-2 text-sm border focus:outline-none transition-all"
           style={{
             borderRadius: `var(--preview-radius, ${theme.radius})`,
             borderColor: '#e5e7eb',
           }}
+          onFocus={(e) => {
+            e.target.style.borderColor = theme.primary
+            e.target.style.boxShadow = `0 0 0 2px ${theme.primarySoft}`
+          }}
+          onBlur={(e) => {
+            e.target.style.borderColor = '#e5e7eb'
+            e.target.style.boxShadow = 'none'
+          }}
         />
         <button
-          className="px-3 py-2 text-white"
+          className="px-3 py-2 text-white cursor-pointer"
           style={{
-            backgroundColor: `var(--preview-primary, ${theme.primary})`,
+            backgroundColor: getSendButtonBg(),
             borderRadius: `var(--preview-radius, ${theme.radius})`,
+            transform: isSendPressed ? 'scale(0.95)' : 'scale(1)',
+            transition: 'all 150ms ease',
           }}
+          onMouseEnter={() => setIsSendHovered(true)}
+          onMouseLeave={() => { setIsSendHovered(false); setIsSendPressed(false) }}
+          onMouseDown={() => setIsSendPressed(true)}
+          onMouseUp={() => setIsSendPressed(false)}
         >
           <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path

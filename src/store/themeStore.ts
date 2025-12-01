@@ -35,6 +35,7 @@ interface ThemeState {
 
   // Export/Import
   exportSemanticBrand: (brandName?: string) => void
+  exportFullTokens: () => void
   importSemanticBrand: (jsonData: unknown) => Promise<{ success: boolean; brandName?: string; error?: string }>
 
   // View Mode
@@ -326,6 +327,14 @@ export const useThemeStore = create<ThemeState>((set, get) => ({
     const filename = generateExportFilename(targetBrand)
 
     downloadJson(exportData, filename)
+  },
+
+  // Export full orbit-tokens.json with all brands
+  exportFullTokens: () => {
+    const { tokens } = get()
+    if (!tokens) return
+
+    downloadJson(tokens, 'orbit-tokens.json')
   },
 
   // Import semantic-brand.json

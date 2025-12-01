@@ -1,4 +1,4 @@
-import { createContext, useContext, useMemo, type ReactNode } from 'react'
+import { createContext, useContext, useMemo, useEffect, type ReactNode } from 'react'
 import { useThemeStore } from '@/store/themeStore'
 import { resolveTokenValue } from '@/utils/tokenResolver'
 import {
@@ -41,16 +41,32 @@ interface ThemePreviewProviderProps {
   children: ReactNode
 }
 
-// Map radius size to px value
-const radiusPxMap: Record<string, string> = {
-  sm: '4px',
-  md: '8px',
-  lg: '12px',
-  xl: '16px',
-}
-
 export function ThemePreviewProvider({ config, children }: ThemePreviewProviderProps) {
   const { tokens } = useThemeStore()
+
+  // Load Google Font dynamically
+  useEffect(() => {
+    if (!config.fontFamily || config.fontFamily === 'Inter') return
+
+    const fontName = config.fontFamily.replace(/\s+/g, '+')
+    const linkId = 'preview-font-link'
+
+    // Remove existing link
+    const existing = document.getElementById(linkId)
+    if (existing) existing.remove()
+
+    // Add new font link
+    const link = document.createElement('link')
+    link.id = linkId
+    link.href = `https://fonts.googleapis.com/css2?family=${fontName}:wght@400;500;600;700&display=swap`
+    link.rel = 'stylesheet'
+    document.head.appendChild(link)
+
+    return () => {
+      const toRemove = document.getElementById(linkId)
+      if (toRemove) toRemove.remove()
+    }
+  }, [config.fontFamily])
 
   const { theme, isValid } = useMemo(() => {
     if (!tokens) {
@@ -82,6 +98,17 @@ export function ThemePreviewProvider({ config, children }: ThemePreviewProviderP
       return resolved || '#cccccc'
     }
 
+    // Get radius px value from tokens
+    const getRadiusPx = (radiusKey: string): string => {
+      if (!tokens?.global?.radius?.[radiusKey]) return '8px'
+      const radiusToken = tokens.global.radius[radiusKey] as { $value: number | string }
+      const value = radiusToken.$value
+      if (typeof value === 'number') {
+        return value === 9999 ? '9999px' : `${value}px`
+      }
+      return '8px'
+    }
+
     const resolvedTheme: PreviewTheme = {
       primary: resolveAlias(primaryVariants.main),
       primarySoft: resolveAlias(primaryVariants.soft),
@@ -91,7 +118,7 @@ export function ThemePreviewProvider({ config, children }: ThemePreviewProviderP
       secondarySoft: resolveAlias(secondaryVariants.soft),
       accent: resolveAlias(accentVariants.main),
       accentSoft: resolveAlias(accentVariants.soft),
-      radius: radiusPxMap[config.radius] || '8px',
+      radius: getRadiusPx(config.radius),
       fontFamily: `${config.fontFamily}, system-ui, sans-serif`,
     }
 

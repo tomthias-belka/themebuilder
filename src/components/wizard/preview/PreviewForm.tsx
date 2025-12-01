@@ -1,9 +1,22 @@
 import { useState } from 'react'
 import { usePreviewTheme } from './ThemePreviewProvider'
+import { PreviewButton } from './PreviewButton'
 
 export function PreviewForm() {
   const { theme } = usePreviewTheme()
   const [checked, setChecked] = useState(true)
+
+  // Shared input styling with focus state handlers
+  const getInputFocusHandlers = () => ({
+    onFocus: (e: React.FocusEvent<HTMLInputElement | HTMLSelectElement>) => {
+      e.target.style.borderColor = theme.primary
+      e.target.style.boxShadow = `0 0 0 2px ${theme.primarySoft}`
+    },
+    onBlur: (e: React.FocusEvent<HTMLInputElement | HTMLSelectElement>) => {
+      e.target.style.borderColor = '#e5e7eb'
+      e.target.style.boxShadow = 'none'
+    },
+  })
 
   return (
     <div
@@ -24,19 +37,12 @@ export function PreviewForm() {
           <input
             type="email"
             placeholder="you@example.com"
-            className="w-full px-3 py-2 text-sm border focus:outline-none focus:ring-2"
+            className="w-full px-3 py-2 text-sm border focus:outline-none transition-all"
             style={{
               borderRadius: `var(--preview-radius, ${theme.radius})`,
               borderColor: '#e5e7eb',
             }}
-            onFocus={(e) => {
-              e.target.style.borderColor = theme.primary
-              e.target.style.boxShadow = `0 0 0 2px ${theme.primarySoft}`
-            }}
-            onBlur={(e) => {
-              e.target.style.borderColor = '#e5e7eb'
-              e.target.style.boxShadow = 'none'
-            }}
+            {...getInputFocusHandlers()}
           />
         </div>
 
@@ -46,11 +52,12 @@ export function PreviewForm() {
             Subject
           </label>
           <select
-            className="w-full px-3 py-2 text-sm border bg-white"
+            className="w-full px-3 py-2 text-sm border bg-white focus:outline-none transition-all"
             style={{
               borderRadius: `var(--preview-radius, ${theme.radius})`,
               borderColor: '#e5e7eb',
             }}
+            {...getInputFocusHandlers()}
           >
             <option>General Inquiry</option>
             <option>Support</option>
@@ -59,9 +66,9 @@ export function PreviewForm() {
         </div>
 
         {/* Checkbox */}
-        <label className="flex items-center gap-2 cursor-pointer">
+        <label className="flex items-center gap-2 cursor-pointer group">
           <div
-            className="w-4 h-4 border-2 flex items-center justify-center transition-colors"
+            className="w-4 h-4 border-2 flex items-center justify-center transition-all"
             style={{
               borderRadius: '4px',
               borderColor: checked ? theme.primary : '#d1d5db',
@@ -79,19 +86,13 @@ export function PreviewForm() {
               </svg>
             )}
           </div>
-          <span className="text-sm">Subscribe to newsletter</span>
+          <span className="text-sm group-hover:text-gray-900 transition-colors">Subscribe to newsletter</span>
         </label>
 
         {/* Submit button */}
-        <button
-          className="w-full px-4 py-2 text-sm font-medium text-white transition-colors"
-          style={{
-            backgroundColor: `var(--preview-primary, ${theme.primary})`,
-            borderRadius: `var(--preview-radius, ${theme.radius})`,
-          }}
-        >
+        <PreviewButton variant="primary" className="w-full">
           Send Message
-        </button>
+        </PreviewButton>
       </div>
     </div>
   )
