@@ -33,8 +33,7 @@ export function Sidebar({ onAddTheme, onDeleteTheme, onAddColorFamily }: Sidebar
         <div className="flex items-center gap-3">
           <Logo size={28} />
           <div>
-            <h1 className="text-lg font-semibold">Orbit Theme Builder</h1>
-            <p className="text-sm text-sidebar-foreground/60">Manage your brand themes</p>
+            <h1 className="text-lg font-semibold">Orbit</h1>
           </div>
         </div>
       </div>
