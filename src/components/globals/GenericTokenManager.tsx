@@ -13,6 +13,7 @@ import {
 } from '@/components/ui/table'
 import { Plus, Trash2, ArrowLeft } from 'lucide-react'
 import type { SingleValueToken } from '@/types/tokens'
+import { sortByTShirtSize } from '@/utils/tshirtSizeSort'
 
 interface GenericTokenManagerProps {
   section: 'spacing' | 'radius'
@@ -53,7 +54,7 @@ export function GenericTokenManager({ section, onBack }: GenericTokenManagerProp
         value: token.$value,
         type: token.$type
       }))
-      .sort((a, b) => a.name.localeCompare(b.name))
+      .sort((a, b) => sortByTShirtSize(a.name, b.name))
   }, [tokens, section])
 
   const handleAdd = async () => {

@@ -15,6 +15,7 @@ import {
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { Plus, Trash2, ArrowLeft } from 'lucide-react'
 import type { SingleValueToken, TokenType } from '@/types/tokens'
+import { sortByTShirtSize } from '@/utils/tshirtSizeSort'
 
 interface TypographyManagerProps {
   onBack: () => void
@@ -75,7 +76,7 @@ export function TypographyManager({ onBack }: TypographyManagerProps) {
         value: token.$value,
         type: token.$type
       }))
-      .sort((a, b) => a.name.localeCompare(b.name))
+      .sort((a, b) => sortByTShirtSize(a.name, b.name))
   }, [tokens, activeTab])
 
   const handleAdd = async () => {
