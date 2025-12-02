@@ -4,6 +4,9 @@ import { Upload } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { JsonEditor } from '@/components/editor/JsonEditor'
 import { TokenTreeNav } from '@/components/editor/TokenTreeNav'
+import { GenericTokenManager } from '@/components/globals/GenericTokenManager'
+import { TypographyManager } from '@/components/globals/TypographyManager'
+import { ColorFamilyView } from '@/components/globals/ColorFamilyView'
 
 interface MainContentProps {
   onUploadTokens: () => void
@@ -11,7 +14,7 @@ interface MainContentProps {
 }
 
 export function MainContent({ onUploadTokens, children }: MainContentProps) {
-  const { tokens, selectedBrand, isLoading, viewMode } = useThemeStore()
+  const { tokens, selectedBrand, isLoading, viewMode, sidebarView, navigateToThemes, navigateToGlobalSection } = useThemeStore()
 
   if (isLoading) {
     return (
@@ -45,7 +48,52 @@ export function MainContent({ onUploadTokens, children }: MainContentProps) {
     )
   }
 
-  // No brand selected
+  // Show Global Token Managers based on sidebarView
+  if (sidebarView.type === 'globalSection') {
+    const section = sidebarView.section
+
+    if (section === 'typography') {
+      return (
+        <ScrollArea className="flex-1">
+          <TypographyManager onBack={navigateToThemes} />
+        </ScrollArea>
+      )
+    }
+
+    if (section === 'spacing' || section === 'radius') {
+      return (
+        <ScrollArea className="flex-1">
+          <GenericTokenManager section={section} onBack={navigateToThemes} />
+        </ScrollArea>
+      )
+    }
+
+    // Colors section - show placeholder or navigate to color families
+    return (
+      <div className="flex-1 flex items-center justify-center">
+        <div className="text-center max-w-md">
+          <h3 className="text-lg font-semibold mb-2">Colors</h3>
+          <p className="text-muted-foreground">
+            Select a color family from the sidebar to view its palette, or create a new one.
+          </p>
+        </div>
+      </div>
+    )
+  }
+
+  // Show Color Family View
+  if (sidebarView.type === 'colorFamily') {
+    return (
+      <ScrollArea className="flex-1">
+        <ColorFamilyView
+          familyName={sidebarView.familyName}
+          onBack={() => navigateToGlobalSection('colors')}
+        />
+      </ScrollArea>
+    )
+  }
+
+  // No brand selected (themes view but no brand)
   if (!selectedBrand) {
     return (
       <div className="flex-1 flex items-center justify-center">

@@ -7,6 +7,7 @@ interface AppLayoutProps {
   onUploadSemanticBrand: () => void
   onAddTheme: () => void
   onDeleteTheme: (brandName: string) => void
+  onAddColorFamily: () => void
   children?: React.ReactNode
 }
 
@@ -15,12 +16,13 @@ export function AppLayout({
   onUploadSemanticBrand,
   onAddTheme,
   onDeleteTheme,
+  onAddColorFamily,
   children,
 }: AppLayoutProps) {
   return (
     <div className="h-screen w-screen flex overflow-hidden">
       {/* Sidebar */}
-      <Sidebar onAddTheme={onAddTheme} onDeleteTheme={onDeleteTheme} />
+      <Sidebar onAddTheme={onAddTheme} onDeleteTheme={onDeleteTheme} onAddColorFamily={onAddColorFamily} />
 
       {/* Main Area */}
       <div className="flex-1 flex flex-col min-w-0">

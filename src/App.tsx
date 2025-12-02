@@ -10,6 +10,7 @@ import {
   DeleteThemeModal,
 } from '@/components/modals'
 import { ThemeBuilderWizard } from '@/components/wizard'
+import { ColorPaletteWizard } from '@/components/globals/ColorPaletteWizard'
 import { PasswordGate } from '@/components/auth/PasswordGate'
 
 function App() {
@@ -22,6 +23,7 @@ function App() {
   const [themeWizardOpen, setThemeWizardOpen] = useState(false)
   const [deleteThemeOpen, setDeleteThemeOpen] = useState(false)
   const [themeToDelete, setThemeToDelete] = useState<string>('')
+  const [colorPaletteWizardOpen, setColorPaletteWizardOpen] = useState(false)
 
   // Initialize store on mount
   useEffect(() => {
@@ -58,6 +60,7 @@ function App() {
         onUploadSemanticBrand={() => setImportSemanticOpen(true)}
         onAddTheme={() => setThemeWizardOpen(true)}
         onDeleteTheme={handleDeleteTheme}
+        onAddColorFamily={() => setColorPaletteWizardOpen(true)}
       >
         <TokenEditor />
       </AppLayout>
@@ -79,6 +82,10 @@ function App() {
         open={deleteThemeOpen}
         onOpenChange={setDeleteThemeOpen}
         brandName={themeToDelete}
+      />
+      <ColorPaletteWizard
+        open={colorPaletteWizardOpen}
+        onOpenChange={setColorPaletteWizardOpen}
       />
 
       <Toaster />

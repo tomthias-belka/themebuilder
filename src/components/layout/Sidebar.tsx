@@ -2,70 +2,95 @@ import { cn } from '@/lib/utils'
 import { useThemeStore } from '@/store/themeStore'
 import { ScrollArea } from '@/components/ui/scroll-area'
 import { Button } from '@/components/ui/button'
-import { Plus, Trash2, Check } from 'lucide-react'
+import { Logo } from '@/components/ui/Logo'
+import { Trash2, Check } from 'lucide-react'
 import { extractBrandNames } from '@/utils/tokenFlattener'
+import { SidebarSection, SidebarAddButton } from './SidebarSection'
+import { GlobalTokensNav } from './GlobalTokensNav'
 
 interface SidebarProps {
   onAddTheme: () => void
   onDeleteTheme: (brandName: string) => void
+  onAddColorFamily: () => void
 }
 
-export function Sidebar({ onAddTheme, onDeleteTheme }: SidebarProps) {
-  const { tokens, selectedBrand, selectBrand } = useThemeStore()
+export function Sidebar({ onAddTheme, onDeleteTheme, onAddColorFamily }: SidebarProps) {
+  const { tokens, selectedBrand, selectBrand, sidebarView, navigateToThemes } = useThemeStore()
 
   const brandNames = tokens ? extractBrandNames(tokens) : []
+  const isThemesExpanded = sidebarView.type === 'themes'
+  const isGlobalsExpanded = sidebarView.type === 'globalSection' || sidebarView.type === 'colorFamily'
+
+  const handleSelectBrand = (brand: string) => {
+    selectBrand(brand)
+    navigateToThemes()
+  }
 
   return (
     <div className="w-64 h-full bg-sidebar text-sidebar-foreground flex flex-col">
       {/* Header */}
       <div className="p-4 border-b border-sidebar-border">
-        <h1 className="text-lg font-semibold">Orbit Theme Builder</h1>
-        <p className="text-sm text-sidebar-foreground/60">Manage your brand themes</p>
+        <div className="flex items-center gap-3">
+          <Logo size={28} />
+          <div>
+            <h1 className="text-lg font-semibold">Orbit Theme Builder</h1>
+            <p className="text-sm text-sidebar-foreground/60">Manage your brand themes</p>
+          </div>
+        </div>
       </div>
 
-      {/* Theme List */}
+      {/* Navigation */}
       <ScrollArea className="flex-1">
-        <div className="p-2">
-          <div className="flex items-center justify-between px-2 py-1 mb-2">
-            <span className="text-xs font-medium text-sidebar-foreground/60 uppercase tracking-wider">
-              Themes
-            </span>
-            <Button
-              variant="ghost"
-              size="icon"
-              className="h-6 w-6 text-sidebar-foreground/60 hover:text-sidebar-foreground hover:bg-sidebar-accent"
-              onClick={onAddTheme}
-              disabled={!tokens}
-            >
-              <Plus className="h-4 w-4" />
-            </Button>
-          </div>
-
+        {/* Themes Section */}
+        <SidebarSection
+          title="Themes"
+          count={brandNames.length}
+          isExpanded={isThemesExpanded}
+          onToggle={navigateToThemes}
+          action={tokens ? <SidebarAddButton onClick={onAddTheme} /> : undefined}
+        >
           {!tokens ? (
-            <div className="px-2 py-4 text-center">
+            <div className="px-4 py-2 text-center">
               <p className="text-sm text-sidebar-foreground/60">
                 Upload a tokens file to get started
               </p>
             </div>
           ) : brandNames.length === 0 ? (
-            <div className="px-2 py-4 text-center">
+            <div className="px-4 py-2 text-center">
               <p className="text-sm text-sidebar-foreground/60">No themes found</p>
             </div>
           ) : (
-            <div className="space-y-1">
+            <div className="space-y-0.5 px-2">
               {brandNames.map((brand) => (
                 <ThemeItem
                   key={brand}
                   name={brand}
-                  isSelected={selectedBrand === brand}
-                  onSelect={() => selectBrand(brand)}
+                  isSelected={selectedBrand === brand && sidebarView.type === 'themes'}
+                  onSelect={() => handleSelectBrand(brand)}
                   onDelete={() => onDeleteTheme(brand)}
                   canDelete={brandNames.length > 1}
                 />
               ))}
             </div>
           )}
-        </div>
+        </SidebarSection>
+
+        {/* Global Tokens Section */}
+        {tokens && (
+          <SidebarSection
+            title="Global Tokens"
+            isExpanded={isGlobalsExpanded}
+            onToggle={() => {
+              if (isGlobalsExpanded) {
+                navigateToThemes()
+              } else {
+                useThemeStore.getState().navigateToGlobalSection('colors')
+              }
+            }}
+          >
+            <GlobalTokensNav onAddColorFamily={onAddColorFamily} />
+          </SidebarSection>
+        )}
       </ScrollArea>
 
       {/* Footer */}

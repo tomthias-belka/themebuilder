@@ -1,8 +1,9 @@
 import { create } from 'zustand'
 import { db, dbOperations } from '@/db/database'
-import type { Brand, OrbitTokensJson, FlattenedToken } from '@/types/tokens'
+import type { Brand, OrbitTokensJson, FlattenedToken, SingleValueToken, TokenType } from '@/types/tokens'
 import { flattenSemanticTokens, extractBrandNames, updateTokenValue, addBrandToTokens, removeBrandFromTokens, addBrandWithCustomColors } from '@/utils/tokenFlattener'
 import type { GeneratedBrandColors, RadiusSize } from '@/types/wizard'
+import type { SidebarView, GlobalTokenSection } from '@/types/globalTokens'
 import { createSemanticBrandExport, generateExportFilename, downloadJson, mergeSemanticBrandImport } from '@/utils/exportFormat'
 
 interface ThemeState {
@@ -20,6 +21,9 @@ interface ThemeState {
   jsonEditorError: string | null
   selectedTokenPath: string | null
   isTokenTreeOpen: boolean
+
+  // Sidebar Navigation
+  sidebarView: SidebarView
 
   // Actions
   initialize: () => Promise<void>
@@ -46,6 +50,19 @@ interface ThemeState {
   // Token Navigation
   setSelectedTokenPath: (path: string | null) => void
   setTokenTreeOpen: (open: boolean) => void
+
+  // Sidebar Navigation
+  setSidebarView: (view: SidebarView) => void
+  navigateToThemes: () => void
+  navigateToGlobalSection: (section: GlobalTokenSection) => void
+  navigateToColorFamily: (familyName: string) => void
+
+  // Global Token CRUD
+  addColorFamily: (name: string, steps: Record<string, SingleValueToken>) => Promise<void>
+  deleteColorFamily: (name: string) => Promise<void>
+  addGlobalToken: (category: string, name: string, value: string, type: string) => Promise<void>
+  updateGlobalToken: (category: string, name: string, value: string) => Promise<void>
+  deleteGlobalToken: (category: string, name: string) => Promise<void>
 }
 
 export const useThemeStore = create<ThemeState>((set, get) => ({
@@ -61,6 +78,7 @@ export const useThemeStore = create<ThemeState>((set, get) => ({
   jsonEditorError: null,
   selectedTokenPath: null,
   isTokenTreeOpen: false,
+  sidebarView: { type: 'themes' },
 
   // Initialize from IndexedDB or preload default tokens
   initialize: async () => {
@@ -436,5 +454,117 @@ export const useThemeStore = create<ThemeState>((set, get) => ({
 
   // Token Navigation
   setSelectedTokenPath: (path) => set({ selectedTokenPath: path }),
-  setTokenTreeOpen: (open) => set({ isTokenTreeOpen: open })
+  setTokenTreeOpen: (open) => set({ isTokenTreeOpen: open }),
+
+  // Sidebar Navigation
+  setSidebarView: (view) => set({ sidebarView: view }),
+  navigateToThemes: () => set({ sidebarView: { type: 'themes' } }),
+  navigateToGlobalSection: (section) => set({ sidebarView: { type: 'globalSection', section } }),
+  navigateToColorFamily: (familyName) => set({ sidebarView: { type: 'colorFamily', familyName } }),
+
+  // Global Token CRUD
+  addColorFamily: async (name, steps) => {
+    const { tokens } = get()
+    if (!tokens) return
+
+    // Check if family already exists
+    if (tokens.global?.colors?.[name]) {
+      throw new Error(`Color family "${name}" already exists`)
+    }
+
+    const newTokens = JSON.parse(JSON.stringify(tokens)) as OrbitTokensJson
+    if (!newTokens.global.colors) {
+      newTokens.global.colors = {}
+    }
+    newTokens.global.colors[name] = steps
+
+    await dbOperations.setGlobalTokens(newTokens)
+    set({ tokens: newTokens, hasUnsavedChanges: false })
+  },
+
+  deleteColorFamily: async (name) => {
+    const { tokens } = get()
+    if (!tokens?.global?.colors?.[name]) return
+
+    const newTokens = JSON.parse(JSON.stringify(tokens)) as OrbitTokensJson
+    delete newTokens.global.colors[name]
+
+    await dbOperations.setGlobalTokens(newTokens)
+    set({ tokens: newTokens, hasUnsavedChanges: false, sidebarView: { type: 'globalSection', section: 'colors' } })
+  },
+
+  addGlobalToken: async (category, name, value, type) => {
+    const { tokens } = get()
+    if (!tokens) return
+
+    const newTokens = JSON.parse(JSON.stringify(tokens)) as OrbitTokensJson
+
+    // Handle nested typography structure
+    if (category.startsWith('typography.')) {
+      const subCategory = category.split('.')[1]
+      if (!newTokens.global.typography) {
+        newTokens.global.typography = {}
+      }
+      const typography = newTokens.global.typography as Record<string, Record<string, SingleValueToken>>
+      if (!typography[subCategory]) {
+        typography[subCategory] = {}
+      }
+      typography[subCategory][name] = { $value: value, $type: type as TokenType }
+    } else {
+      // Handle flat categories (spacing, radius, opacity, borderWidth)
+      if (!newTokens.global[category]) {
+        newTokens.global[category] = {}
+      }
+      (newTokens.global[category] as Record<string, SingleValueToken>)[name] = { $value: value, $type: type as TokenType }
+    }
+
+    await dbOperations.setGlobalTokens(newTokens)
+    set({ tokens: newTokens, hasUnsavedChanges: false })
+  },
+
+  updateGlobalToken: async (category, name, value) => {
+    const { tokens } = get()
+    if (!tokens) return
+
+    const newTokens = JSON.parse(JSON.stringify(tokens)) as OrbitTokensJson
+
+    if (category.startsWith('typography.')) {
+      const subCategory = category.split('.')[1]
+      const typography = newTokens.global.typography as Record<string, Record<string, SingleValueToken>> | undefined
+      if (typography?.[subCategory]?.[name]) {
+        typography[subCategory][name].$value = value
+      }
+    } else {
+      const cat = newTokens.global[category] as Record<string, SingleValueToken> | undefined
+      if (cat?.[name]) {
+        cat[name].$value = value
+      }
+    }
+
+    await dbOperations.setGlobalTokens(newTokens)
+    set({ tokens: newTokens, hasUnsavedChanges: false })
+  },
+
+  deleteGlobalToken: async (category, name) => {
+    const { tokens } = get()
+    if (!tokens) return
+
+    const newTokens = JSON.parse(JSON.stringify(tokens)) as OrbitTokensJson
+
+    if (category.startsWith('typography.')) {
+      const subCategory = category.split('.')[1]
+      const typography = newTokens.global.typography as Record<string, Record<string, SingleValueToken>> | undefined
+      if (typography?.[subCategory]?.[name]) {
+        delete typography[subCategory][name]
+      }
+    } else {
+      const cat = newTokens.global[category] as Record<string, SingleValueToken> | undefined
+      if (cat?.[name]) {
+        delete cat[name]
+      }
+    }
+
+    await dbOperations.setGlobalTokens(newTokens)
+    set({ tokens: newTokens, hasUnsavedChanges: false })
+  }
 }))
