@@ -15,7 +15,7 @@ import {
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { Plus, Trash2, ArrowLeft } from 'lucide-react'
 import type { SingleValueToken, TokenType } from '@/types/tokens'
-import { sortByTShirtSize } from '@/utils/tshirtSizeSort'
+import { sortByTShirtSize, sortByNumericValue } from '@/utils/tshirtSizeSort'
 
 interface TypographyManagerProps {
   onBack: () => void
@@ -70,13 +70,20 @@ export function TypographyManager({ onBack }: TypographyManagerProps) {
     const typography = tokens?.global?.typography as Record<string, Record<string, SingleValueToken>> | undefined
     const data = typography?.[activeTab]
     if (!data) return []
-    return Object.entries(data)
-      .map(([name, token]) => ({
-        name,
-        value: token.$value,
-        type: token.$type
-      }))
-      .sort((a, b) => sortByTShirtSize(a.name, b.name))
+
+    const list = Object.entries(data).map(([name, token]) => ({
+      name,
+      value: token.$value,
+      type: token.$type
+    }))
+
+    // Use numeric sorting for numeric categories, T-shirt size sorting for others
+    const numericCategories: TypographyCategory[] = ['fontSize', 'fontWeight', 'lineHeight', 'letterSpacing']
+    if (numericCategories.includes(activeTab)) {
+      return list.sort((a, b) => sortByNumericValue(a.name, a.value, b.name, b.value))
+    }
+
+    return list.sort((a, b) => sortByTShirtSize(a.name, b.name))
   }, [tokens, activeTab])
 
   const handleAdd = async () => {
