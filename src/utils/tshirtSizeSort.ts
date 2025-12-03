@@ -27,6 +27,11 @@ const TSHIRT_SIZE_ORDER = [
  * @returns Numeric value or NaN if not parseable
  */
 function extractNumericValue(value: string): number {
+  // Type guard: ensure value is a string
+  if (typeof value !== 'string') {
+    return NaN
+  }
+
   // Remove common CSS units and parse the number
   const match = value.match(/^-?\d+\.?\d*/)
   return match ? parseFloat(match[0]) : NaN
