@@ -9,6 +9,7 @@ import {
   ImportSemanticModal,
   DeleteThemeModal,
 } from '@/components/modals'
+import { ThemeExporter } from '@/components/export'
 import { ThemeBuilderWizard } from '@/components/wizard'
 import { ColorPaletteWizard } from '@/components/globals/ColorPaletteWizard'
 import { PasswordGate } from '@/components/auth/PasswordGate'
@@ -24,6 +25,7 @@ function App() {
   const [deleteThemeOpen, setDeleteThemeOpen] = useState(false)
   const [themeToDelete, setThemeToDelete] = useState<string>('')
   const [colorPaletteWizardOpen, setColorPaletteWizardOpen] = useState(false)
+  const [exporterOpen, setExporterOpen] = useState(false)
 
   // Initialize store on mount
   useEffect(() => {
@@ -61,6 +63,7 @@ function App() {
         onAddTheme={() => setThemeWizardOpen(true)}
         onDeleteTheme={handleDeleteTheme}
         onAddColorFamily={() => setColorPaletteWizardOpen(true)}
+        onOpenExporter={() => setExporterOpen(true)}
       >
         <TokenEditor />
       </AppLayout>
@@ -86,6 +89,10 @@ function App() {
       <ColorPaletteWizard
         open={colorPaletteWizardOpen}
         onOpenChange={setColorPaletteWizardOpen}
+      />
+      <ThemeExporter
+        open={exporterOpen}
+        onOpenChange={setExporterOpen}
       />
 
       <Toaster />

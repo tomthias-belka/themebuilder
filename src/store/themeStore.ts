@@ -5,6 +5,8 @@ import { flattenSemanticTokens, extractBrandNames, updateTokenValue, addBrandToT
 import type { GeneratedBrandColors, RadiusSize } from '@/types/wizard'
 import type { SidebarView, GlobalTokenSection } from '@/types/globalTokens'
 import { createSemanticBrandExport, generateExportFilename, downloadJson, mergeSemanticBrandImport } from '@/utils/exportFormat'
+import type { ExportOptions, ExportResult } from '@/utils/themeExporter'
+import { executeExport, extractBrandNamesFromTokens } from '@/utils/themeExporter'
 
 interface ThemeState {
   // Data
@@ -41,6 +43,10 @@ interface ThemeState {
   exportSemanticBrand: (brandName?: string) => void
   exportFullTokens: () => void
   importSemanticBrand: (jsonData: unknown) => Promise<{ success: boolean; brandName?: string; error?: string }>
+
+  // Advanced Export
+  exportAdvanced: (options: ExportOptions) => ExportResult
+  getAvailableBrands: () => string[]
 
   // View Mode
   setViewMode: (mode: 'table' | 'json') => void
@@ -400,6 +406,18 @@ export const useThemeStore = create<ThemeState>((set, get) => ({
       console.error('Failed to import semantic brand:', error)
       return { success: false, error: String(error) }
     }
+  },
+
+  // Advanced Export - returns result only, component handles download
+  exportAdvanced: (options: ExportOptions): ExportResult => {
+    const { tokens } = get()
+    return executeExport(tokens, options)
+  },
+
+  getAvailableBrands: (): string[] => {
+    const { tokens } = get()
+    if (!tokens) return []
+    return extractBrandNamesFromTokens(tokens)
   },
 
   // View Mode Actions

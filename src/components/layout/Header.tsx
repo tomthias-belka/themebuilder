@@ -1,6 +1,6 @@
 import { Button } from '@/components/ui/button'
 import { useThemeStore } from '@/store/themeStore'
-import { Upload, Download, FileUp, Save, FileDown } from 'lucide-react'
+import { Upload, Download, FileUp, Save, FileDown, Settings2 } from 'lucide-react'
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -13,9 +13,10 @@ import { ViewModeToggle } from '@/components/ui/view-mode-toggle'
 interface HeaderProps {
   onUploadTokens: () => void
   onUploadSemanticBrand: () => void
+  onOpenExporter?: () => void
 }
 
-export function Header({ onUploadTokens, onUploadSemanticBrand }: HeaderProps) {
+export function Header({ onUploadTokens, onUploadSemanticBrand, onOpenExporter }: HeaderProps) {
   const { tokens, selectedBrand, exportSemanticBrand, exportFullTokens, hasUnsavedChanges, saveChanges, viewMode, setViewMode } = useThemeStore()
 
   const handleExportBrand = () => {
@@ -105,6 +106,15 @@ export function Header({ onUploadTokens, onUploadSemanticBrand }: HeaderProps) {
               <Download className="h-4 w-4 mr-2" />
               Export All (orbit-tokens.json)
             </DropdownMenuItem>
+            {onOpenExporter && (
+              <>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem onClick={onOpenExporter}>
+                  <Settings2 className="h-4 w-4 mr-2" />
+                  Advanced Export...
+                </DropdownMenuItem>
+              </>
+            )}
           </DropdownMenuContent>
         </DropdownMenu>
       </div>

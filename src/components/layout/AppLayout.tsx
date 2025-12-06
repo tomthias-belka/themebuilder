@@ -8,6 +8,7 @@ interface AppLayoutProps {
   onAddTheme: () => void
   onDeleteTheme: (brandName: string) => void
   onAddColorFamily: () => void
+  onOpenExporter?: () => void
   children?: React.ReactNode
 }
 
@@ -17,6 +18,7 @@ export function AppLayout({
   onAddTheme,
   onDeleteTheme,
   onAddColorFamily,
+  onOpenExporter,
   children,
 }: AppLayoutProps) {
   return (
@@ -29,6 +31,7 @@ export function AppLayout({
         <Header
           onUploadTokens={onUploadTokens}
           onUploadSemanticBrand={onUploadSemanticBrand}
+          onOpenExporter={onOpenExporter}
         />
         <MainContent onUploadTokens={onUploadTokens}>
           {children}
